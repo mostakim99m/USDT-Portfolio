@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USDT Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:       #0C0E14;
+  --s1:       #12151E;
+  --s2:       #181C28;
+  --s3:       #1E2333;
+  --border:   #252A3A;
+  --border2:  #2E354D;
+  --gold:     #F0C040;
+  --gold2:    #FFDA6A;
+  --gold-dim: rgba(240,192,64,0.10);
+  --gold-glow:rgba(240,192,64,0.22);
+  --eth-c:    #9B8EFF;
+  --bsc-c:    #F3BA2F;
+  --pol-c:    #A67DFF;
+  --green:    #3DD68C;
+  --red:      #FF5C5C;
+  --text:     #DDE3F0;
+  --text2:    #8892AA;
+  --text3:    #555F78;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --r:        12px;
+}
+
+html{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh}
+body{min-height:100vh;overflow-x:hidden}
+
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:0.4;
+}
+
+.app{position:relative;z-index:1;max-width:740px;margin:0 auto;padding:0 16px 80px}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0 24px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--gold-dim);border:1px solid rgba(240,192,64,0.35);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.brand-name{font-size:15px;font-weight:600;letter-spacing:-0.2px}
+.brand-name em{color:var(--gold);font-style:normal}
+
+.topbar-right{display:flex;align-items:center;gap:8px}
+.icon-btn{
+  width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:var(--s1);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text2);transition:all 0.15s;
+}
+.icon-btn:hover{border-color:var(--border2);color:var(--text);background:var(--s2)}
+.icon-btn svg{width:16px;height:16px}
+
+.refresh-btn{font-size:16px}
+.spin-anim{animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.hero{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:20px;padding:32px 28px 28px;margin-bottom:20px;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(240,192,64,0.07) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-label{
+  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px;font-family:var(--mono);
+}
+.hero-amount{
+  font-family:var(--mono);font-size:clamp(36px,7vw,52px);
+  font-weight:600;color:var(--gold);letter-spacing:-1px;line-height:1;
+  margin-bottom:4px;
+}
+.hero-amount .cents{font-size:0.55em;color:var(--gold2);opacity:0.8}
+.hero-amount.loading{opacity:0.35}
+@keyframes pulse{0%,100%{opacity:0.35}50%{opacity:0.6}}
+.hero-amount.loading{animation:pulse 1.4s ease-in-out infinite}
+.hero-ticker{
+  font-size:12px;color:var(--text3);font-family:var(--mono);
+  margin-bottom:20px;
+}
+.hero-nets{display:flex;gap:10px;flex-wrap:wrap}
+.hero-net{
+  display:flex;align-items:center;gap:6px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:8px;padding:6px 12px;
+}
+.hero-net-dot{width:7px;height:7px;border-radius:50%}
+.hero-net-name{font-size:11px;font-family:var(--mono);color:var(--text2);font-weight:500}
+.hero-net-val{font-size:12px;font-family:var(--mono);font-weight:600}
+.hero-net.eth .hero-net-dot{background:var(--eth-c)}
+.hero-net.bsc .hero-net-dot{background:var(--bsc-c)}
+.hero-net.pol .hero-net-dot{background:var(--pol-c)}
+.hero-net.eth .hero-net-val{color:var(--eth-c)}
+.hero-net.bsc .hero-net-val{color:var(--bsc-c)}
+.hero-net.pol .hero-net-val{color:var(--pol-c)}
+
+.last-update{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:14px}
+
+.wallets-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;padding:6px 10px;
+  cursor:pointer;user-select:none;border-radius:8px;
+  transition:background 0.15s;
+}
+.wallets-header:hover{background:var(--s2)}
+.wallets-header-left{display:flex;align-items:center;gap:8px}
+.wallets-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)}
+.wallet-count{
+  font-size:11px;font-family:var(--mono);color:var(--text3);
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:20px;padding:2px 9px;
+}
+.wallets-chevron{
+  color:var(--text3);display:flex;align-items:center;
+  transition:transform 0.22s ease;
+  transform:rotate(180deg);
+}
+.wallets-section.collapsed .wallets-chevron{transform:rotate(0deg)}
+
+.wallets-wrap{
+  overflow:hidden;
+  max-height:4000px;
+  opacity:1;
+  transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1),
+             opacity 0.25s ease;
+}
+.wallets-section.collapsed .wallets-wrap{
+  max-height:0;
+  opacity:0;
+}
+
+.wallets{display:flex;flex-direction:column;gap:10px}
+
+.wallet-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;transition:border-color 0.2s;
+}
+.wallet-card:hover{border-color:var(--border2)}
+
+.wc-head{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 18px;
+  background:var(--s2);
+  cursor:pointer;user-select:none;
+  transition:background 0.15s;
+}
+.wc-head:hover{background:var(--s3)}
+.wallet-card.expanded .wc-head{border-bottom:1px solid var(--border)}
+
+.wc-idx{
+  width:24px;height:24px;border-radius:6px;background:var(--s3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;color:var(--text3);font-family:var(--mono);
+  flex-shrink:0;
+}
+.wc-addr{
+  font-family:var(--mono);font-size:12px;color:var(--text2);
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.wc-total{
+  font-family:var(--mono);font-size:13px;font-weight:600;color:var(--gold);
+  white-space:nowrap;flex-shrink:0;
+}
+
+.wc-chevron{
+  width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  color:var(--text3);transition:transform 0.22s ease;margin-left:2px;
+}
+.wallet-card.expanded .wc-chevron{transform:rotate(180deg)}
+
+.wc-chains{
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  max-height:0;
+  transition:max-height 0.28s cubic-bezier(0.4,0,0.2,1),
+             opacity 0.22s ease;
+  opacity:0;
+}
+.wallet-card.expanded .wc-chains{
+  max-height:400px;
+  opacity:1;
+}
+
+.wc-row{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 18px;border-bottom:1px solid var(--border);
+  transition:background 0.12s;
+}
+.wc-row:last-child{border-bottom:none}
+.wc-row:hover{background:rgba(255,255,255,0.015)}
+
+.chain-pill{
+  display:flex;align-items:center;gap:5px;width:82px;flex-shrink:0;
+}
+.chain-pill-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.chain-pill-name{font-size:11px;font-weight:600;font-family:var(--mono);letter-spacing:0.3px}
+.wc-row.eth .chain-pill-dot{background:var(--eth-c)}
+.wc-row.bsc .chain-pill-dot{background:var(--bsc-c)}
+.wc-row.pol .chain-pill-dot{background:var(--pol-c)}
+.wc-row.eth .chain-pill-name{color:var(--eth-c)}
+.wc-row.bsc .chain-pill-name{color:var(--bsc-c)}
+.wc-row.pol .chain-pill-name{color:var(--pol-c)}
+
+.chain-bal{font-family:var(--mono);font-size:13px;font-weight:500;flex:1}
+.chain-bal.zero{color:var(--text3)}
+.chain-bal.loading{color:var(--text3);font-size:12px}
+.chain-bal.err{color:var(--red);font-size:11px}
+
+.usdt-unit{font-size:10px;color:var(--text3);margin-left:4px;font-weight:400}
+
+.mini-spin{
+  display:inline-block;width:10px;height:10px;
+  border:1.5px solid var(--border2);border-top-color:var(--gold);
+  border-radius:50%;animation:spin 0.7s linear infinite;
+  vertical-align:middle;margin-right:4px;
+}
+
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(8,10,16,0.85);
+  z-index:100;align-items:center;justify-content:center;padding:16px;
+  backdrop-filter:blur(4px);
+}
+.overlay.open{display:flex}
+
+.modal{
+  background:var(--s1);border:1px solid var(--border2);border-radius:18px;
+  width:100%;max-width:520px;padding:28px;
+  animation:popIn 0.22s cubic-bezier(.34,1.56,.64,1);
+  max-height:90vh;overflow-y:auto;
+}
+@keyframes popIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:none}}
+
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.modal-title{font-size:18px;font-weight:700;letter-spacing:-0.3px}
+.modal-close{
+  width:30px;height:30px;border-radius:7px;border:1px solid var(--border);
+  background:var(--s2);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;color:var(--text2);font-size:16px;transition:all 0.15s;
+}
+.modal-close:hover{background:var(--s3);color:var(--text)}
+
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.5}
+
+.modal-label{
+  font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px;
+}
+
+.addr-list, .manual-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.addr-row, .manual-row{display:flex;gap:8px;align-items:center}
+.addr-row input, .manual-row input{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:10px 13px;color:var(--text);font-family:var(--mono);font-size:12px;
+  outline:none;transition:border-color 0.15s;width: 100%;
+}
+.addr-row input{flex:1;min-width:0;}
+.manual-row .m-name{flex:1;min-width:0;}
+.manual-row .m-amt{width:110px;}
+.addr-row input:focus, .manual-row input:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
+.addr-row input::placeholder, .manual-row input::placeholder{color:var(--text3)}
+.del-btn{
+  width:32px;height:32px;flex-shrink:0;border-radius:7px;border:1px solid var(--border);
+  background:var(--s2);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:16px;transition:all 0.15s;
+}
+.del-btn:hover{border-color:var(--red);color:var(--red);background:rgba(255,92,92,0.08)}
+
+.add-row-btn{
+  display:flex;align-items:center;gap:6px;width:100%;padding:9px 13px;
+  background:transparent;border:1px dashed var(--border);border-radius:8px;
+  color:var(--text3);font-size:13px;cursor:pointer;transition:all 0.15s;
+  font-family:var(--sans);
+}
+.add-row-btn:hover{border-color:var(--border2);color:var(--text2);background:var(--s2)}
+
+.modal-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+
+.net-toggles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.net-toggle{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg);cursor:pointer;transition:all 0.15s;user-select:none;
+  font-size:12px;font-weight:600;font-family:var(--mono);color:var(--text3);
+}
+.net-toggle:hover{border-color:var(--border2);color:var(--text2)}
+.net-toggle.active-eth{border-color:var(--eth-c);background:rgba(155,142,255,0.08);color:var(--eth-c)}
+.net-toggle.active-bsc{border-color:var(--bsc-c);background:rgba(243,186,47,0.08);color:var(--bsc-c)}
+.net-toggle.active-pol{border-color:var(--pol-c);background:rgba(166,125,255,0.08);color:var(--pol-c)}
+.net-toggle-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:0.5;transition:opacity 0.15s}
+.net-toggle.active-eth .net-toggle-dot,
+.net-toggle.active-bsc .net-toggle-dot,
+.net-toggle.active-pol .net-toggle-dot{opacity:1}
+
+.interval-opts{display:flex;gap:6px;flex-wrap:wrap}
+.interval-opt{
+  padding:7px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg);cursor:pointer;transition:all 0.15s;
+  font-size:12px;font-weight:600;font-family:var(--mono);color:var(--text3);
+}
+.interval-opt:hover{border-color:var(--border2);color:var(--text2)}
+.interval-opt.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+
+.modal-footer{display:flex;gap:10px;margin-top:22px}
+.btn-save{
+  flex:1;padding:11px;background:var(--gold);color:#0C0E14;
+  border:none;border-radius:9px;font-family:var(--sans);font-weight:700;
+  font-size:14px;cursor:pointer;transition:all 0.15s;
+}
+.btn-save:hover{background:var(--gold2)}
+.btn-cancel{
+  padding:11px 18px;background:transparent;border:1px solid var(--border);
+  border-radius:9px;color:var(--text2);font-family:var(--sans);font-weight:500;
+  font-size:13px;cursor:pointer;transition:all 0.15s;
+}
+.btn-cancel:hover{border-color:var(--border2);color:var(--text)}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--s2);border:1px solid var(--border2);border-radius:10px;
+  padding:10px 18px;font-size:13px;color:var(--text);
+  opacity:0;transition:all 0.25s;pointer-events:none;z-index:200;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+
+.manual-edit-card{cursor:default}
+.manual-edit-value{
+  cursor:text;
+  min-width:55px;
+  text-align:right;
+  border-radius:5px;
+  padding:2px 5px;
+  transition:background 0.15s, box-shadow 0.15s;
+}
+.manual-edit-value:hover{
+  background:var(--gold-dim);
+}
+.manual-edit-value.editing{
+  padding:0;
+}
+.manual-inline-input{
+  width:90px;
+  background:var(--bg);
+  color:var(--gold);
+  border:1px solid var(--gold);
+  border-radius:6px;
+  outline:none;
+  padding:4px 6px;
+  text-align:right;
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:600;
+  box-shadow:0 0 0 2px var(--gold-dim);
+}
+
+#onboard{display:none;position:fixed;inset:0;background:var(--bg);z-index:50;
+  align-items:center;justify-content:center;padding:20px;}
+#onboard.open{display:flex}
+
+.onboard-box{
+  background:var(--s1);border:1px solid var(--border2);border-radius:22px;
+  width:100%;max-width:480px;padding:36px 32px;text-align:center;max-height: 90vh;overflow-y: auto;
+}
+.ob-icon{font-size:44px;margin-bottom:16px}
+.ob-title{font-size:24px;font-weight:700;letter-spacing:-0.5px;margin-bottom:8px}
+.ob-title em{color:var(--gold);font-style:normal}
+.ob-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:28px}
+
+.ob-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;text-align:left}
+.ob-row{display:flex;gap:8px;align-items:center}
+.ob-row input{
+  flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:12.5px;
+  outline:none;transition:border-color 0.15s;min-width:0;width: 100%;
+}
+.ob-row input:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
+.ob-row input::placeholder{color:var(--text3)}
+.ob-del{
+  width:34px;height:34px;flex-shrink:0;border-radius:7px;border:1px solid var(--border);
+  background:var(--s2);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:16px;transition:all 0.15s;
+}
+.ob-del:hover{border-color:var(--red);color:var(--red);background:rgba(255,92,92,0.08)}
+
+.ob-add{
+  display:flex;align-items:center;gap:6px;width:100%;padding:10px 13px;
+  background:transparent;border:1px dashed var(--border);border-radius:8px;
+  color:var(--text3);font-size:13px;cursor:pointer;transition:all 0.15s;font-family:var(--sans);
+}
+.ob-add:hover{border-color:var(--border2);color:var(--text2);background:var(--s2)}
+
+.ob-start{
+  width:100%;margin-top:22px;padding:13px;background:var(--gold);color:#0C0E14;
+  border:none;border-radius:10px;font-family:var(--sans);font-weight:700;
+  font-size:15px;cursor:pointer;transition:all 0.15s;
+  box-shadow:0 0 24px var(--gold-glow);
+}
+.ob-start:hover{background:var(--gold2);transform:translateY(-1px)}
+
+@media(max-width:520px){
+  .hero{padding:22px 18px 20px}
+  .wc-head{padding:12px 14px}
+  .wc-row{padding:10px 14px}
+  .hero-nets{gap:7px}
+  .hero-net{padding:5px 10px}
+}
+
+.addr-row input.dup,
+.ob-row input.dup{
+  border-color:var(--red);
+  background:rgba(255,92,92,0.06);
+}
+.dup-badge{
+  font-size:10px;font-family:var(--mono);font-weight:600;
+  color:var(--red);letter-spacing:0.4px;
+  margin-top:3px;display:none;
+}
+.addr-row.has-dup .dup-badge,
+.ob-row.has-dup .dup-badge{display:block;}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--s1);border-radius:99px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+*{scrollbar-width:thin;scrollbar-color:var(--border2) var(--s1)}
+</style>
+</head>
+<body>
+
+<!-- ONBOARD -->
+<div id="onboard">
+  <div class="onboard-box">
+    <div class="ob-icon">💼</div>
+    <h1 class="ob-title">USDT <em>Portfolio</em></h1>
+    <p class="ob-sub">আপনার wallet addresses যোগ করুন।<br>ETH, BSC ও Polygon-এ USDT balance track করবে।</p>
+    <div class="ob-list" id="obList"></div>
+    <button class="ob-add" onclick="obAddRow()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      আরেকটি address যোগ করুন
+    </button>
+    <button class="ob-start" onclick="obSave()">Portfolio দেখুন →</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="settingsOverlay" onclick="closeSettings(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Settings & Accounts</div>
+      <button class="modal-close" onclick="closeSettingsBtn()">✕</button>
+    </div>
+    <p class="modal-sub">Wallet address এবং অন্যান্য অফ-চেইন / এক্সচেঞ্জ ব্যালেন্স আপডেট করুন।</p>
+    
+    <div class="modal-label">Wallet Addresses</div>
+    <div class="addr-list" id="settingsList"></div>
+    <button class="add-row-btn" onclick="settingsAddRow()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Address যোগ করুন
+    </button>
+
+    <hr class="modal-divider">
+    <div class="modal-label">Manual / Off-Chain Balances</div>
+    <div class="manual-list" id="manualList"></div>
+    <button class="add-row-btn" onclick="settingsAddManualRow()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Account / Balance যোগ করুন
+    </button>
+
+    <hr class="modal-divider">
+    <div class="modal-label">Network Filter</div>
+    <div class="net-toggles">
+      <div class="net-toggle" id="cfg-eth" onclick="toggleNet('eth')">
+        <span class="net-toggle-dot"></span>Ethereum
+      </div>
+      <div class="net-toggle" id="cfg-bsc" onclick="toggleNet('bsc')">
+        <span class="net-toggle-dot"></span>BNB Chain
+      </div>
+      <div class="net-toggle" id="cfg-pol" onclick="toggleNet('pol')">
+        <span class="net-toggle-dot"></span>Polygon
+      </div>
+    </div>
+
+    <hr class="modal-divider">
+    <div class="modal-label">Auto-Refresh Interval</div>
+    <div class="interval-opts" id="intervalOpts">
+      <div class="interval-opt" data-ms="30000"  onclick="selectInterval(30000)">30s</div>
+      <div class="interval-opt" data-ms="60000"  onclick="selectInterval(60000)">1m</div>
+      <div class="interval-opt" data-ms="300000" onclick="selectInterval(300000)">5m</div>
+      <div class="interval-opt" data-ms="0"      onclick="selectInterval(0)">বন্ধ</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSettingsBtn()">বাতিল</button>
+      <button class="btn-save" onclick="saveSettings()">Save করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MAIN APP -->
+<div class="app" id="mainApp" style="display:none">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">💰</div>
+      <div class="brand-name">USDT <em>Portfolio</em></div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn refresh-btn" id="refreshBtn" onclick="refreshAll()" title="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="refreshIcon">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+      </button>
+      <button class="icon-btn" onclick="openSettings()" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">Total Portfolio</div>
+    <div class="hero-amount" id="heroTotal"><span id="heroInt">—</span><span class="cents" id="heroCents"></span></div>
+    <div class="hero-ticker">USDT</div>
+    
+    <!-- NETWORK BADGES -->
+    <div class="hero-nets">
+      <div class="hero-net eth">
+        <div class="hero-net-dot"></div>
+        <div class="hero-net-name">ETH</div>
+        <div class="hero-net-val" id="heroEth">—</div>
+      </div>
+      <div class="hero-net bsc">
+        <div class="hero-net-dot"></div>
+        <div class="hero-net-name">BSC</div>
+        <div class="hero-net-val" id="heroBsc">—</div>
+      </div>
+      <div class="hero-net pol">
+        <div class="hero-net-dot"></div>
+        <div class="hero-net-name">POL</div>
+        <div class="hero-net-val" id="heroPol">—</div>
+      </div>
+    </div>
+
+    <!-- MANUAL ACCOUNTS BADGES -->
+    <div class="hero-nets" id="manualNetsContainer" style="margin-top: 8px;"></div>
+
+    <div class="last-update" id="lastUpdate"></div>
+  </div>
+
+  <!-- WALLETS SECTION -->
+  <div class="wallets-section expanded" id="walletsSection">
+    <div class="wallets-header" onclick="toggleWalletsSection()">
+      <div class="wallets-header-left">
+        <div class="wallets-label">Wallets</div>
+        <div class="wallet-count" id="walletCount">0</div>
+      </div>
+      <div class="wallets-chevron">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div class="wallets-wrap">
+      <div class="wallets" id="walletsList"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// CONFIG
+const NETWORKS = {
+  eth:{label:'Ethereum',short:'ETH',usdt:'0xdAC17F958D2ee523a2206206994597C13D831ec7',decimals:6,
+    rpcs:['https://eth.llamarpc.com','https://rpc.ankr.com/eth','https://1rpc.io/eth','https://ethereum-rpc.publicnode.com']},
+  bsc:{label:'BNB Chain',short:'BSC',usdt:'0x55d398326f99059fF775485246999027B3197955',decimals:18,
+    rpcs:['https://bsc-dataseed.binance.org','https://bsc-dataseed1.defibit.io','https://rpc.ankr.com/bsc','https://bsc-rpc.publicnode.com']},
+  pol:{label:'Polygon',short:'POL',usdt:'0xc2132D05D31c914a87C6611C10748AEb04B58e8F',decimals:6,
+    rpcs:['https://polygon-rpc.com','https://rpc.ankr.com/polygon','https://1rpc.io/matic','https://polygon-bor-rpc.publicnode.com']},
+};
+const STORAGE_KEY     = 'usdt_portfolio_addresses';
+const CFG_NETS_KEY    = 'usdt_portfolio_nets';
+const CFG_INTERVAL_KEY= 'usdt_portfolio_interval';
+const CFG_MANUAL_KEY  = 'usdt_portfolio_manual';
+const NETS = Object.keys(NETWORKS);
+
+// HELPERS
+const $ = id => document.getElementById(id);
+function fmt(n){
+  if(n===null||isNaN(n))return'—';
+  return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtHero(n){
+  if(n===null||isNaN(n)){$('heroInt').textContent='—';$('heroCents').textContent='';return;}
+  const s=n.toFixed(2);const[i,d]=s.split('.');
+  $('heroInt').textContent=Number(i).toLocaleString('en-US');
+  $('heroCents').textContent='.'+d;
+}
+function shortAddr(a){return a.slice(0,8)+'...'+a.slice(-6)}
+
+function showToast(msg,ms=2200){
+  const t=$('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+// STORAGE
+function loadAddresses(){
+  try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}
+}
+function saveAddresses(arr){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(arr));
+}
+
+function loadNets(){
+  try{return JSON.parse(localStorage.getItem(CFG_NETS_KEY))||['eth','bsc','pol'];}
+  catch{return['eth','bsc','pol'];}
+}
+function saveNets(arr){localStorage.setItem(CFG_NETS_KEY,JSON.stringify(arr));}
+
+function loadInterval(){
+  const v=localStorage.getItem(CFG_INTERVAL_KEY);
+  return v===null?60000:Number(v);
+}
+
+// Manual Accounts Storage
+function loadManualBalances(){
+  try{
+    const data = JSON.parse(localStorage.getItem(CFG_MANUAL_KEY));
+    if(Array.isArray(data)) return data;
+    return [];
+  } catch{
+    return [];
+  }
+}
+function saveManualBalances(arr){
+  localStorage.setItem(CFG_MANUAL_KEY, JSON.stringify(arr));
+}
+
+// RPC
+function buildCallData(addr){
+  return '0x70a08231'+addr.slice(2).toLowerCase().padStart(64,'0');
+}
+async function fetchBal(rpcs,usdtAddr,wallet,decimals){
+  const body={jsonrpc:'2.0',id:1,method:'eth_call',
+    params:[{to:usdtAddr,data:buildCallData(wallet)},'latest']};
+  let last;
+  for(const rpc of rpcs){
+    try{
+      const r=await fetch(rpc,{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body),signal:AbortSignal.timeout(8000)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const j=await r.json();
+      if(j.error)throw new Error(j.error.message);
+      return Number(BigInt(j.result||'0x0'))/Math.pow(10,decimals);
+    }catch(e){last=e;}
+  }
+  throw last;
+}
+
+// STATE
+let addresses=[];
+let activeNets=['eth','bsc','pol'];
+let manualBalances=[];
+let currentInterval=60000;
+let isRefreshing=false;
+let autoTimer=null;
+
+// ONBOARD
+function showOnboard(){
+  $('onboard').classList.add('open');
+  $('mainApp').style.display='none';
+  obReset();
+}
+function obReset(){
+  const list=$('obList');list.innerHTML='';
+  obAddRow('');
+}
+function obAddRow(val=''){
+  const list=$('obList');
+  const row=document.createElement('div');row.className='ob-row';
+  row.innerHTML=`<div style="flex:1;min-width:0">
+      <input type="text" placeholder="0x..." value="${val}" spellcheck="false">
+      <div class="dup-badge">⚠ Duplicate address</div>
+    </div>
+    <button class="ob-del" onclick="this.closest('.ob-row').remove();checkDuplicates('obList','ob-row')" title="Remove">✕</button>`;
+  list.appendChild(row);
+  const inp=row.querySelector('input');
+  inp.addEventListener('paste',e=>handleAddrPaste(e,list,'ob-row',obAddRow));
+  inp.addEventListener('input',()=>checkDuplicates('obList','ob-row'));
+  if(!val)setTimeout(()=>inp.focus(),50);
+}
+
+function handleAddrPaste(e,list,rowClass,addRowFn){
+  const text=(e.clipboardData||window.clipboardData).getData('text');
+  const lines=text.split(/[\n\r,;]+/).map(s=>s.trim()).filter(Boolean);
+  if(lines.length<2)return;
+  e.preventDefault();
+  const addrs=lines.filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
+  if(!addrs.length){showToast('⚠️ কোনো valid address পাওয়া যায়নি');return;}
+  const currentInput=e.target;
+  currentInput.value=addrs[0];
+  addrs.slice(1).forEach(a=>addRowFn(a));
+  const listId=list.id;
+  setTimeout(()=>checkDuplicates(listId,rowClass),0);
+  showToast(`✓ ${addrs.length}টি address যোগ হয়েছে`);
+}
+
+function checkDuplicates(listId,rowClass){
+  const list=$(listId);if(!list)return;
+  const rows=[...list.querySelectorAll('.'+rowClass)];
+  const vals=rows.map(r=>(r.querySelector('input').value.trim().toLowerCase()));
+  const counts={};
+  vals.forEach(v=>{if(v)counts[v]=(counts[v]||0)+1;});
+  rows.forEach((row,i)=>{
+    const v=vals[i];
+    const isDup=v&&counts[v]>1;
+    const inp=row.querySelector('input');
+    inp.classList.toggle('dup',isDup);
+    row.classList.toggle('has-dup',isDup);
+  });
+}
+function obSave(){
+  const inputs=$('obList').querySelectorAll('input');
+  const vals=[...inputs].map(i=>i.value.trim());
+  const valid=vals.filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
+  if(!valid.length){
+    showToast('⚠️ কমপক্ষে একটি valid address দিন');return;
+  }
+  const unique=new Set(valid.map(v=>v.toLowerCase()));
+  if(unique.size!==valid.length){
+    showToast('⚠️ Duplicate address সরিয়ে দিন');return;
+  }
+  saveAddresses(valid);
+  $('onboard').classList.remove('open');
+  initApp();
+}
+
+// MAIN APP
+function initApp(){
+  addresses=loadAddresses();
+  activeNets=loadNets();
+  manualBalances=loadManualBalances();
+  currentInterval=loadInterval();
+  loadWalletsSectionState();
+  if(!addresses.length){showOnboard();return;}
+  $('mainApp').style.display='block';
+  applyNetFilter();
+  renderManualBadges();
+  buildWalletUI();
+  fetchAll();
+  startAutoRefresh();
+}
+
+function renderManualBadges(){
+  const container = $('manualNetsContainer');
+  if(!container) return;
+  if(!manualBalances.length){
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = manualBalances.map((item, index) => `
+    <div class="hero-net manual-edit-card" data-index="${index}" style="border-color: var(--gold-dim);">
+      <div class="hero-net-dot" style="background: var(--gold);"></div>
+      <div class="hero-net-name">${item.name}</div>
+      <div class="hero-net-val manual-edit-value"
+           style="color: var(--gold);"
+           title="Click to edit"
+           onclick="editManualAmount(${index}, this)">
+        ${fmt(item.amount)}
+      </div>
+    </div>
+  `).join('');
+}
+
+
+// INLINE EDIT — Manual / Off-Chain amount
+function editManualAmount(index, el){
+  if(!manualBalances[index] || el.querySelector('input')) return;
+
+  const oldValue = Number(manualBalances[index].amount) || 0;
+
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.step = 'any';
+  input.min = '0';
+  input.value = oldValue;
+  input.className = 'manual-inline-input';
+  input.setAttribute('aria-label', `${manualBalances[index].name} amount`);
+
+  el.innerHTML = '';
+  el.appendChild(input);
+  el.classList.add('editing');
+
+  input.focus();
+  input.select();
+
+  let finished = false;
+
+  const finish = (save) => {
+    if(finished) return;
+    finished = true;
+
+    if(save){
+      const value = parseFloat(input.value);
+      if(Number.isFinite(value) && value >= 0){
+        manualBalances[index].amount = value;
+        saveManualBalances(manualBalances);
+        renderManualBadges();
+        fetchAll();
+        showToast('✓ Amount updated');
+        return;
+      }
+    }
+
+    renderManualBadges();
+  };
+
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      finish(true);
+    }else if(e.key === 'Escape'){
+      e.preventDefault();
+      finish(false);
+    }
+  });
+
+  input.addEventListener('blur', () => finish(true));
+}
+
+function buildWalletUI(){
+  const list=$('walletsList');list.innerHTML='';
+  $('walletCount').textContent=addresses.length;
+  fmtHero(null);
+  NETS.forEach(k=>{const el=$(  'hero'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.textContent='—';});
+  $('lastUpdate').textContent='';
+
+  addresses.forEach((addr,i)=>{
+    const card=document.createElement('div');
+    card.className='wallet-card expanded';card.id='wcard-'+i;
+    card.innerHTML=`
+      <div class="wc-head" onclick="toggleCard(${i})">
+        <div class="wc-idx">${i+1}</div>
+        <div class="wc-addr">${shortAddr(addr)}</div>
+        <div class="wc-total" id="wctotal-${i}">—</div>
+        <div class="wc-chevron">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="wc-chains">
+        ${activeNets.map(k=>`
+          <div class="wc-row ${k}">
+            <div class="chain-pill">
+              <span class="chain-pill-dot"></span>
+              <span class="chain-pill-name">${NETWORKS[k].short}</span>
+            </div>
+            <div class="chain-bal loading" id="cbal-${i}-${k}">
+              <span class="mini-spin"></span> loading
+            </div>
+          </div>`).join('')}
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleCard(i){
+  const card=$('wcard-'+i);
+  if(card)card.classList.toggle('expanded');
+}
+
+async function fetchAll(){
+  if(isRefreshing)return;
+  isRefreshing=true;
+  $('refreshIcon').classList.add('spin-anim');
+  $('heroTotal').classList.add('loading');
+
+  addresses.forEach((_,i)=>{
+    activeNets.forEach(k=>{
+      const el=$(`cbal-${i}-${k}`);
+      if(el){el.className='chain-bal loading';el.innerHTML='<span class="mini-spin"></span> loading';}
+    });
+    const t=$('wctotal-'+i);if(t)t.textContent='—';
+  });
+
+  const jobs=addresses.flatMap((addr,i)=>activeNets.map(k=>({addr,i,k})));
+  const results=addresses.map(()=>Object.fromEntries(activeNets.map(k=>[k,null])));
+
+  await Promise.all(jobs.map(async({addr,i,k})=>{
+    try{
+      const net=NETWORKS[k];
+      results[i][k]=await fetchBal(net.rpcs,net.usdt,addr,net.decimals);
+    }catch{
+      results[i][k]=null;
+    }
+  }));
+
+  const totals=Object.fromEntries(activeNets.map(k=>[k,0]));
+  results.forEach((netMap,i)=>{
+    let addrSum=0;
+    activeNets.forEach(k=>{
+      const el=$(`cbal-${i}-${k}`);if(!el)return;
+      const bal=netMap[k];
+      if(bal===null){
+        el.className='chain-bal err';el.textContent='RPC error';
+      } else {
+        el.innerHTML=bal>0?`${fmt(bal)}<span class="usdt-unit">USDT</span>`:'0.00 <span class="usdt-unit">USDT</span>';
+        el.className=bal>0?'chain-bal':'chain-bal zero';
+        addrSum+=bal;
+        totals[k]=(totals[k]||0)+bal;
+      }
+    });
+    const t=$('wctotal-'+i);
+    if(t)t.textContent=fmt(addrSum)+' USDT';
+  });
+
+  // Calculate Manual Balance sum
+  const manualTotal = manualBalances.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+  // Grand Total calculation
+  const grand = activeNets.reduce((s,k)=>s+(totals[k]||0),0) + manualTotal;
+  $('heroTotal').classList.remove('loading');
+  fmtHero(grand);
+
+  ['eth','bsc','pol'].forEach(k=>{
+    const el=document.querySelector(`.hero-net.${k}`);
+    if(el)el.style.display=activeNets.includes(k)?'flex':'none';
+    const valEl=$('hero'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(valEl)valEl.textContent=activeNets.includes(k)?fmt(totals[k]||0):'—';
+  });
+
+  const now=new Date();
+  $('lastUpdate').textContent='Updated '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  $('refreshIcon').classList.remove('spin-anim');
+  isRefreshing=false;
+}
+
+function refreshAll(){fetchAll();}
+
+function toggleWalletsSection(){
+  const sec = $('walletsSection');
+  const collapsed = sec.classList.toggle('collapsed');
+  sec.classList.toggle('expanded', !collapsed);
+
+  localStorage.setItem(
+    'usdt_wallets_collapsed',
+    collapsed ? '1' : '0'
+  );
+}
+
+function loadWalletsSectionState(){
+  const sec = $('walletsSection');
+  if(!sec) return;
+
+  const collapsed = localStorage.getItem('usdt_wallets_collapsed') === '1';
+
+  sec.classList.toggle('collapsed', collapsed);
+  sec.classList.toggle('expanded', !collapsed);
+}
+
+// AUTO-REFRESH (Only refreshes periodically in background, removed visibilitychange trigger)
+function startAutoRefresh(){
+  stopAutoRefresh();
+  if(currentInterval===0)return;
+  autoTimer=setInterval(()=>{
+    if(!document.hidden)fetchAll();
+  },currentInterval);
+}
+function stopAutoRefresh(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+}
+
+// NET FILTER & INTERVAL CONFIG
+function applyNetFilter(){
+  ['eth','bsc','pol'].forEach(k=>{
+    const el=document.querySelector(`.hero-net.${k}`);
+    if(el)el.style.display=activeNets.includes(k)?'flex':'none';
+  });
+}
+
+function toggleNet(k){
+  if(activeNets.includes(k)){
+    if(activeNets.length===1){showToast('⚠️ কমপক্ষে একটি network রাখতে হবে');return;}
+    activeNets=activeNets.filter(n=>n!==k);
+  } else {
+    activeNets=['eth','bsc','pol'].filter(n=>activeNets.includes(n)||n===k);
+  }
+  syncNetToggleUI();
+}
+
+function syncNetToggleUI(){
+  ['eth','bsc','pol'].forEach(k=>{
+    const el=$('cfg-'+k);if(!el)return;
+    el.className='net-toggle'+(activeNets.includes(k)?' active-'+k:'');
+  });
+}
+
+function selectInterval(ms){
+  currentInterval=ms;
+  syncIntervalUI();
+}
+
+function syncIntervalUI(){
+  document.querySelectorAll('.interval-opt').forEach(el=>{
+    el.classList.toggle('active',Number(el.dataset.ms)===currentInterval);
+  });
+}
+
+// SETTINGS MODAL
+function openSettings(){
+  const list=$('settingsList');list.innerHTML='';
+  addresses.forEach(a=>settingsAddRow(a));
+
+  const manualList=$('manualList');manualList.innerHTML='';
+  manualBalances.forEach(m=>settingsAddManualRow(m.name, m.amount));
+
+  syncNetToggleUI();
+  syncIntervalUI();
+  $('settingsOverlay').classList.add('open');
+}
+
+function settingsAddRow(val=''){
+  const list=$('settingsList');
+  const row=document.createElement('div');row.className='addr-row';
+  row.innerHTML=`<div style="flex:1;min-width:0">
+      <input type="text" placeholder="0x..." value="${val}" spellcheck="false">
+      <div class="dup-badge">⚠ Duplicate address</div>
+    </div>
+    <button class="del-btn" onclick="this.closest('.addr-row').remove();checkDuplicates('settingsList','addr-row')" title="Remove">✕</button>`;
+  list.appendChild(row);
+  const inp=row.querySelector('input');
+  inp.addEventListener('paste',e=>handleAddrPaste(e,list,'addr-row',settingsAddRow));
+  inp.addEventListener('input',()=>checkDuplicates('settingsList','addr-row'));
+  if(!val)setTimeout(()=>inp.focus(),50);
+}
+
+function settingsAddManualRow(name='', amt=''){
+  const list=$('manualList');
+  const row=document.createElement('div');row.className='manual-row';
+  row.innerHTML=`
+    <input type="text" class="m-name" placeholder="Name (e.g. Binance)" value="${name}">
+    <input type="number" class="m-amt" placeholder="Amount" value="${amt}">
+    <button class="del-btn" onclick="this.closest('.manual-row').remove()" title="Remove">✕</button>`;
+  list.appendChild(row);
+}
+
+function closeSettings(e){if(e.target===$('settingsOverlay'))closeSettingsBtn();}
+function closeSettingsBtn(){$('settingsOverlay').classList.remove('open');}
+
+function saveSettings(){
+  // Save Addresses
+  const inputs=$('settingsList').querySelectorAll('input');
+  const vals=[...inputs].map(i=>i.value.trim());
+  const valid=vals.filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
+  if(!valid.length){showToast('⚠️ কমপক্ষে একটি valid address দিন');return;}
+  const unique=new Set(valid.map(v=>v.toLowerCase()));
+  if(unique.size!==valid.length){showToast('⚠️ Duplicate address সরিয়ে দিন');return;}
+
+  // Save Manual Balances
+  const manualRows=$('manualList').querySelectorAll('.manual-row');
+  const newManualBalances = [];
+  manualRows.forEach(row=>{
+    const name = row.querySelector('.m-name').value.trim();
+    const amount = parseFloat(row.querySelector('.m-amt').value) || 0;
+    if(name) {
+      newManualBalances.push({ name, amount });
+    }
+  });
+
+  saveAddresses(valid);
+  saveNets(activeNets);
+  saveManualBalances(newManualBalances);
+  localStorage.setItem(CFG_INTERVAL_KEY,String(currentInterval));
+  
+  addresses=valid;
+  manualBalances=newManualBalances;
+
+  closeSettingsBtn();
+  showToast('✓ Saved — balance refresh হচ্ছে');
+  applyNetFilter();
+  renderManualBadges();
+  buildWalletUI();
+  fetchAll();
+  startAutoRefresh();
+}
+
+// BOOT
+window.addEventListener('DOMContentLoaded',initApp);
+</script>
+</body>
+</html>
