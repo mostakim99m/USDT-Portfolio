@@ -115,6 +115,29 @@ body::after{
 
 .last-update{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:14px}
 
+/* ─── CHART ─────────────────────────────────────────── */
+.hero-inner{display:flex;gap:16px;align-items:flex-start}
+.hero-left{flex:0 0 auto}
+.hero-right{
+  flex:1;min-width:0;display:flex;flex-direction:column;
+  border-left:1px solid var(--border);padding-left:16px;
+  height:90px;
+}
+.chart-tabs{display:flex;gap:5px;margin-bottom:6px;flex-shrink:0}
+.chart-tab{
+  padding:2px 8px;border-radius:5px;border:1px solid var(--border);
+  background:transparent;color:var(--text3);font-family:var(--mono);
+  font-size:10px;font-weight:600;cursor:pointer;transition:all 0.15s;
+}
+.chart-tab:hover{border-color:var(--border2);color:var(--text2)}
+.chart-tab.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+.chart-canvas-wrap{position:relative;flex:1;min-height:0;overflow:hidden}
+canvas#balChart{position:absolute;inset:0;width:100%;height:100%}
+.chart-empty{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:var(--text3);font-family:var(--mono);
+}
+
 .wallets-header{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:12px;padding:6px 10px;
@@ -566,12 +589,27 @@ body::after{
 
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-label">Total Portfolio</div>
-    <div class="hero-amount" id="heroTotal"><span id="heroInt">—</span><span class="cents" id="heroCents"></span></div>
-    <div class="hero-ticker">USDT</div>
-    
-    <!-- NETWORK BADGES -->
-    <div class="hero-nets">
+    <!-- top row: amount + chart side by side -->
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-label">Total Portfolio</div>
+        <div class="hero-amount" id="heroTotal"><span id="heroInt">—</span><span class="cents" id="heroCents"></span></div>
+        <div class="hero-ticker">USDT</div>
+      </div>
+      <div class="hero-right" id="chartWrap" style="display:none">
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="setChartRange('1D')">1D</button>
+          <button class="chart-tab" onclick="setChartRange('7D')">7D</button>
+          <button class="chart-tab" onclick="setChartRange('30D')">30D</button>
+        </div>
+        <div class="chart-canvas-wrap">
+          <canvas id="balChart"></canvas>
+          <div class="chart-empty" id="chartEmpty" style="display:none">Data জমছে</div>
+        </div>
+      </div>
+    </div>
+    <!-- badges + update below -->
+    <div class="hero-nets" style="margin-top:16px">
       <div class="hero-net eth">
         <div class="hero-net-dot"></div>
         <div class="hero-net-name">ETH</div>
@@ -588,14 +626,9 @@ body::after{
         <div class="hero-net-val" id="heroPol">—</div>
       </div>
     </div>
-
-    <!-- MANUAL ACCOUNTS BADGES -->
-    <div class="hero-nets" id="manualNetsContainer" style="margin-top: 8px;"></div>
-
+    <div class="hero-nets" id="manualNetsContainer" style="margin-top:8px"></div>
     <div class="last-update" id="lastUpdate"></div>
   </div>
-
-  <!-- WALLETS SECTION -->
   <div class="wallets-section expanded" id="walletsSection">
     <div class="wallets-header" onclick="toggleWalletsSection()">
       <div class="wallets-header-left">
@@ -629,6 +662,8 @@ const CFG_INTERVAL_KEY= 'usdt_portfolio_interval';
 const CFG_MANUAL_KEY  = 'usdt_portfolio_manual';
 const CFG_GIST_KEY    = 'usdt_portfolio_gist_id';
 const CFG_TOKEN_KEY   = 'usdt_portfolio_gh_token';
+const CFG_HISTORY_KEY = 'usdt_portfolio_history';
+const HISTORY_MAX     = 30 * 24 * 60; // 30 days of per-minute points max → prune to ~720
 const NETS = Object.keys(NETWORKS);
 
 // HELPERS
@@ -762,6 +797,23 @@ let manualBalances=[];
 let currentInterval=60000;
 let isRefreshing=false;
 let autoTimer=null;
+let chartRange='1D';
+
+// ── HISTORY ──────────────────────────────────────────────────────
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem(CFG_HISTORY_KEY))||[]; }
+  catch{ return []; }
+}
+function saveHistory(arr){ localStorage.setItem(CFG_HISTORY_KEY, JSON.stringify(arr)); }
+function pushHistory(total){
+  const history = loadHistory();
+  history.push({ t: Date.now(), v: total });
+  // 30일분만 보관 (최대 2880개 → 30분 간격 기준)
+  const cutoff = Date.now() - 30*24*60*60*1000;
+  const pruned = history.filter(p=>p.t>=cutoff);
+  saveHistory(pruned);
+  return pruned;
+}
 
 // ONBOARD
 function showOnboard(){
@@ -843,6 +895,10 @@ async function initApp(){
   if(!addresses.length){showOnboard();return;}
   $('mainApp').style.display='block';
   applyNetFilter();
+
+  // পুরনো history থেকে chart দেখাই (fetch-এর আগেই)
+  const existingHistory = loadHistory();
+  if(existingHistory.length>=2) renderChart(existingHistory);
 
   // Gist থেকে site balance pull করি (আগে, যাতে first render-এ দেখায়)
   const gistId = loadGistId();
@@ -1048,8 +1104,107 @@ async function fetchAll(){
 
   const now=new Date();
   $('lastUpdate').textContent='Updated '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  // history save + chart update
+  if(grand>0){
+    const history = pushHistory(grand);
+    renderChart(history);
+  }
+
   $('refreshIcon').classList.remove('spin-anim');
   isRefreshing=false;
+}
+
+// ── CHART ─────────────────────────────────────────────────────────
+function setChartRange(range){
+  chartRange = range;
+  document.querySelectorAll('.chart-tab').forEach(t=>{
+    t.classList.toggle('active', t.textContent===range);
+  });
+  renderChart(loadHistory());
+}
+
+function renderChart(history){
+  const wrap = $('chartWrap');
+  const canvas = $('balChart');
+  const empty = $('chartEmpty');
+  if(!wrap||!canvas) return;
+
+  const msMap = {'1D':86400000,'7D':7*86400000,'30D':30*86400000};
+  const cutoff = Date.now() - (msMap[chartRange]||86400000);
+  let points = history.filter(p=>p.t>=cutoff);
+
+  if(points.length>120){
+    const step = Math.ceil(points.length/120);
+    points = points.filter((_,i)=>i%step===0);
+  }
+
+  wrap.style.display='flex';
+
+  if(points.length<2){
+    canvas.style.display='none';
+    empty.style.display='flex';
+    return;
+  }
+  canvas.style.display='block';
+  empty.style.display='none';
+
+  // double rAF — first paint, then measure
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const dpr = window.devicePixelRatio||1;
+    const canvasWrap = canvas.parentElement;
+    const W = canvasWrap.offsetWidth  || 200;
+    const H = canvasWrap.offsetHeight || 56;
+    if(W===0||H===0) return;
+
+    canvas.width  = W*dpr;
+    canvas.height = H*dpr;
+    canvas.style.width  = W+'px';
+    canvas.style.height = H+'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,W,H);
+
+    const vals = points.map(p=>p.v);
+    const min  = Math.min(...vals);
+    const max  = Math.max(...vals);
+    const range = max-min || 1;
+
+    const px = i => (i/(points.length-1))*W;
+    const py = v => H - 2 - ((v-min)/range)*(H-8);
+
+    // gradient fill
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'rgba(240,192,64,0.20)');
+    grad.addColorStop(1,'rgba(240,192,64,0)');
+
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(vals[0]));
+    for(let i=1;i<points.length;i++) ctx.lineTo(px(i), py(vals[i]));
+    ctx.lineTo(px(points.length-1), H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // line
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(vals[0]));
+    for(let i=1;i<points.length;i++) ctx.lineTo(px(i), py(vals[i]));
+    ctx.strokeStyle = 'rgba(240,192,64,0.9)';
+    ctx.lineWidth   = 1.5;
+    ctx.lineJoin    = 'round';
+    ctx.stroke();
+
+    // last dot
+    const lx = px(points.length-1);
+    const ly = py(vals[vals.length-1]);
+    ctx.beginPath();
+    ctx.arc(lx, ly, 2.5, 0, Math.PI*2);
+    ctx.fillStyle = '#F0C040';
+    ctx.fill();
+  }));
 }
 
 function refreshAll(){fetchAll();}
