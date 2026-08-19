@@ -65,6 +65,12 @@ body::after{
 .icon-btn:hover{border-color:var(--border2);color:var(--text);background:var(--s2)}
 .icon-btn svg{width:16px;height:16px}
 
+/* Auth status indicator on refresh button */
+.icon-btn.auth-ok{border-color:rgba(61,214,140,0.4);color:var(--green)}
+.icon-btn.auth-ok:hover{border-color:var(--green)}
+.icon-btn.auth-warn{border-color:rgba(255,92,92,0.4);color:var(--red)}
+.icon-btn.auth-warn:hover{border-color:var(--red)}
+
 .refresh-btn{font-size:16px}
 .spin-anim{animation:spin 0.7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -114,6 +120,18 @@ body::after{
 .hero-net.pol .hero-net-val{color:var(--pol-c)}
 
 .last-update{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:14px}
+
+/* Rate limit notice banner */
+.rate-limit-banner{
+  display:none;align-items:center;gap:10px;
+  background:rgba(255,92,92,0.08);border:1px solid rgba(255,92,92,0.25);
+  border-radius:10px;padding:10px 14px;margin-bottom:16px;
+  font-size:12px;color:var(--red);font-family:var(--mono);
+}
+.rate-limit-banner.show{display:flex}
+.rate-limit-banner a{color:var(--gold);text-decoration:none}
+.rate-limit-banner a:hover{text-decoration:underline}
+.rl-icon{font-size:14px;flex-shrink:0}
 
 .wallets-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -265,6 +283,31 @@ body::after{
   color:var(--text3);margin-bottom:8px;
 }
 
+/* Auth token section highlight */
+.auth-section{
+  background:rgba(61,214,140,0.04);
+  border:1px solid rgba(61,214,140,0.15);
+  border-radius:10px;padding:14px;margin-bottom:4px;
+}
+.auth-section .modal-label{color:var(--green);margin-bottom:6px}
+.auth-status{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-family:var(--mono);margin-top:7px;
+}
+.auth-dot{width:6px;height:6px;border-radius:50%;background:var(--text3)}
+.auth-dot.ok{background:var(--green)}
+.auth-dot.bad{background:var(--red)}
+.auth-dot.none{background:var(--text3)}
+.auth-status-text{color:var(--text2)}
+.auth-status-text.ok{color:var(--green)}
+.auth-status-text.bad{color:var(--red)}
+.verify-btn{
+  margin-left:auto;padding:3px 10px;border-radius:6px;border:1px solid var(--border2);
+  background:var(--s2);color:var(--text2);font-family:var(--mono);font-size:10px;
+  cursor:pointer;transition:all 0.15s;
+}
+.verify-btn:hover{border-color:var(--green);color:var(--green)}
+
 .addr-list, .manual-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .addr-row, .manual-row{display:flex;gap:8px;align-items:center}
 .addr-row input, .manual-row input{
@@ -341,7 +384,6 @@ body::after{
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-
 .manual-edit-card{cursor:default}
 .manual-edit-value{
   cursor:text;
@@ -351,26 +393,24 @@ body::after{
   padding:2px 5px;
   transition:background 0.15s, box-shadow 0.15s;
 }
-.manual-edit-value:hover{
-  background:var(--gold-dim);
-}
-.manual-edit-value.editing{
-  padding:0;
-}
+.manual-edit-value:hover{background:var(--gold-dim)}
+.manual-edit-value.editing{padding:0}
 .manual-inline-input{
-  width:90px;
-  background:var(--bg);
-  color:var(--gold);
-  border:1px solid var(--gold);
-  border-radius:6px;
-  outline:none;
-  padding:4px 6px;
-  text-align:right;
-  font-family:var(--mono);
-  font-size:12px;
-  font-weight:600;
-  box-shadow:0 0 0 2px var(--gold-dim);
+  width:90px;background:var(--bg);color:var(--gold);
+  border:1px solid var(--gold);border-radius:6px;outline:none;
+  padding:4px 6px;text-align:right;font-family:var(--mono);
+  font-size:12px;font-weight:600;box-shadow:0 0 0 2px var(--gold-dim);
 }
+
+/* Shared input style (used in both modal and onboard) */
+.text-input{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:10px 13px;color:var(--text);font-family:var(--mono);font-size:12px;
+  outline:none;transition:border-color 0.15s, box-shadow 0.15s;width:100%;
+}
+.text-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
+.text-input::placeholder{color:var(--text3)}
+.text-input.green-focus:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(61,214,140,0.12)}
 
 #onboard{display:none;position:fixed;inset:0;background:var(--bg);z-index:50;
   align-items:center;justify-content:center;padding:20px;}
@@ -378,7 +418,7 @@ body::after{
 
 .onboard-box{
   background:var(--s1);border:1px solid var(--border2);border-radius:22px;
-  width:100%;max-width:480px;padding:36px 32px;text-align:center;max-height: 90vh;overflow-y: auto;
+  width:100%;max-width:480px;padding:36px 32px;text-align:center;max-height:90vh;overflow-y:auto;
 }
 .ob-icon{font-size:44px;margin-bottom:16px}
 .ob-title{font-size:24px;font-weight:700;letter-spacing:-0.5px;margin-bottom:8px}
@@ -390,7 +430,7 @@ body::after{
 .ob-row input{
   flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;
   padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:12.5px;
-  outline:none;transition:border-color 0.15s;min-width:0;width: 100%;
+  outline:none;transition:border-color 0.15s;min-width:0;width:100%;
 }
 .ob-row input:focus{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-dim)}
 .ob-row input::placeholder{color:var(--text3)}
@@ -424,18 +464,14 @@ body::after{
   .hero-net{padding:5px 10px}
 }
 
-.addr-row input.dup,
-.ob-row input.dup{
-  border-color:var(--red);
-  background:rgba(255,92,92,0.06);
+.addr-row input.dup,.ob-row input.dup{
+  border-color:var(--red);background:rgba(255,92,92,0.06);
 }
 .dup-badge{
   font-size:10px;font-family:var(--mono);font-weight:600;
-  color:var(--red);letter-spacing:0.4px;
-  margin-top:3px;display:none;
+  color:var(--red);letter-spacing:0.4px;margin-top:3px;display:none;
 }
-.addr-row.has-dup .dup-badge,
-.ob-row.has-dup .dup-badge{display:block;}
+.addr-row.has-dup .dup-badge,.ob-row.has-dup .dup-badge{display:block}
 
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--s1);border-radius:99px}
@@ -469,7 +505,29 @@ body::after{
       <button class="modal-close" onclick="closeSettingsBtn()">✕</button>
     </div>
     <p class="modal-sub">Wallet address এবং অন্যান্য অফ-চেইন / এক্সচেঞ্জ ব্যালেন্স আপডেট করুন।</p>
-    
+
+    <!-- ── GITHUB AUTH TOKEN ── -->
+    <div class="auth-section">
+      <div class="modal-label">🔑 GitHub Authentication</div>
+      <input id="ghTokenInput" type="password" class="text-input green-focus"
+        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+        autocomplete="off" spellcheck="false">
+      <div class="auth-status" id="authStatus">
+        <div class="auth-dot none" id="authDot"></div>
+        <div class="auth-status-text none" id="authStatusText">Token দেওয়া নেই — unauthenticated (60 req/hr)</div>
+        <button class="verify-btn" onclick="verifyToken()">Verify</button>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px;font-family:var(--mono);line-height:1.6">
+        Token ছাড়া GitHub API rate limit: <strong style="color:var(--red)">60 req/hr</strong> (IP-based).<br>
+        Token দিলে: <strong style="color:var(--green)">5,000 req/hr</strong>.<br>
+        <a href="https://github.com/settings/tokens/new?scopes=gist&description=USDT+Portfolio" target="_blank"
+           style="color:var(--gold);text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+          → এখানে ক্লিক করে token তৈরি করুন (শুধু <code>gist</code> scope দরকার)
+        </a>
+      </div>
+    </div>
+
+    <hr class="modal-divider">
     <div class="modal-label">Wallet Addresses</div>
     <div class="addr-list" id="settingsList"></div>
     <button class="add-row-btn" onclick="settingsAddRow()">
@@ -511,12 +569,7 @@ body::after{
     <hr class="modal-divider">
     <div class="modal-label">Userscript Gist ID</div>
     <div style="display:flex;gap:8px;align-items:center">
-      <input id="gistIdInput" type="text" placeholder="e.g. a1b2c3d4e5f6..." spellcheck="false"
-        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;
-               padding:10px 13px;color:var(--text);font-family:var(--mono);font-size:12px;
-               outline:none;transition:border-color 0.15s;"
-        onfocus="this.style.borderColor='var(--gold)'"
-        onblur="this.style.borderColor='var(--border)'">
+      <input id="gistIdInput" type="text" class="text-input" placeholder="e.g. a1b2c3d4e5f6..." spellcheck="false">
     </div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:var(--mono);">
       Userscript যে Gist-এ balance push করে তার ID দিন।<br>
@@ -549,7 +602,7 @@ body::after{
           <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
         </svg>
       </button>
-      <button class="icon-btn" onclick="openSettings()" title="Settings">
+      <button class="icon-btn" id="settingsBtn" onclick="openSettings()" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
@@ -558,13 +611,21 @@ body::after{
     </div>
   </div>
 
+  <!-- RATE LIMIT BANNER -->
+  <div class="rate-limit-banner" id="rateLimitBanner">
+    <span class="rl-icon">⚠️</span>
+    <span>
+      GitHub API rate limit পূর্ণ হয়েছে। Settings-এ গিয়ে GitHub Token যোগ করুন — rate limit 60→5000 req/hr হবে।
+      <a href="#" onclick="openSettings();return false">Settings খুলুন →</a>
+    </span>
+  </div>
+
   <!-- HERO -->
   <div class="hero">
     <div class="hero-label">Total Portfolio</div>
     <div class="hero-amount" id="heroTotal"><span id="heroInt">—</span><span class="cents" id="heroCents"></span></div>
     <div class="hero-ticker">USDT</div>
-    
-    <!-- NETWORK BADGES -->
+
     <div class="hero-nets">
       <div class="hero-net eth">
         <div class="hero-net-dot"></div>
@@ -583,9 +644,7 @@ body::after{
       </div>
     </div>
 
-    <!-- MANUAL ACCOUNTS BADGES -->
-    <div class="hero-nets" id="manualNetsContainer" style="margin-top: 8px;"></div>
-
+    <div class="hero-nets" id="manualNetsContainer" style="margin-top:8px"></div>
     <div class="last-update" id="lastUpdate"></div>
   </div>
 
@@ -608,7 +667,7 @@ body::after{
 </div>
 
 <script>
-// CONFIG
+// ── CONFIG ─────────────────────────────────────────────────────────
 const NETWORKS = {
   eth:{label:'Ethereum',short:'ETH',usdt:'0xdAC17F958D2ee523a2206206994597C13D831ec7',decimals:6,
     rpcs:['https://eth.llamarpc.com','https://rpc.ankr.com/eth','https://1rpc.io/eth','https://ethereum-rpc.publicnode.com']},
@@ -617,15 +676,16 @@ const NETWORKS = {
   pol:{label:'Polygon',short:'POL',usdt:'0xc2132D05D31c914a87C6611C10748AEb04B58e8F',decimals:6,
     rpcs:['https://polygon-rpc.com','https://rpc.ankr.com/polygon','https://1rpc.io/matic','https://polygon-bor-rpc.publicnode.com']},
 };
-const STORAGE_KEY     = 'usdt_portfolio_addresses';
-const CFG_NETS_KEY    = 'usdt_portfolio_nets';
-const CFG_INTERVAL_KEY= 'usdt_portfolio_interval';
-const CFG_MANUAL_KEY  = 'usdt_portfolio_manual';
-const CFG_GIST_KEY    = 'usdt_portfolio_gist_id';
-const GIST_FILENAME   = 'usdt-portfolio.json';
+const STORAGE_KEY      = 'usdt_portfolio_addresses';
+const CFG_NETS_KEY     = 'usdt_portfolio_nets';
+const CFG_INTERVAL_KEY = 'usdt_portfolio_interval';
+const CFG_MANUAL_KEY   = 'usdt_portfolio_manual';
+const CFG_GIST_KEY     = 'usdt_portfolio_gist_id';
+const CFG_GH_TOKEN_KEY = 'usdt_portfolio_gh_token';  // NEW
+const GIST_FILENAME    = 'usdt-portfolio.json';
 const NETS = Object.keys(NETWORKS);
 
-// HELPERS
+// ── HELPERS ────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 function fmt(n){
   if(n===null||isNaN(n))return'—';
@@ -638,86 +698,139 @@ function fmtHero(n){
   $('heroCents').textContent='.'+d;
 }
 function shortAddr(a){return a.slice(0,8)+'...'+a.slice(-6)}
-
 function showToast(msg,ms=2200){
   const t=$('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),ms);
 }
 
-// STORAGE
-function loadAddresses(){
-  try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}
-}
-function saveAddresses(arr){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(arr));
-}
-
-function loadNets(){
-  try{return JSON.parse(localStorage.getItem(CFG_NETS_KEY))||['eth','bsc','pol'];}
-  catch{return['eth','bsc','pol'];}
-}
+// ── STORAGE ────────────────────────────────────────────────────────
+function loadAddresses(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}}
+function saveAddresses(arr){localStorage.setItem(STORAGE_KEY,JSON.stringify(arr));}
+function loadNets(){try{return JSON.parse(localStorage.getItem(CFG_NETS_KEY))||['eth','bsc','pol'];}catch{return['eth','bsc','pol'];}}
 function saveNets(arr){localStorage.setItem(CFG_NETS_KEY,JSON.stringify(arr));}
+function loadInterval(){const v=localStorage.getItem(CFG_INTERVAL_KEY);return v===null?60000:Number(v);}
+function loadManualBalances(){try{const d=JSON.parse(localStorage.getItem(CFG_MANUAL_KEY));return Array.isArray(d)?d:[];}catch{return[];}}
+function saveManualBalances(arr){localStorage.setItem(CFG_MANUAL_KEY,JSON.stringify(arr));}
+function loadGistId(){return localStorage.getItem(CFG_GIST_KEY)||'';}
+function saveGistId(id){localStorage.setItem(CFG_GIST_KEY,id);}
 
-function loadInterval(){
-  const v=localStorage.getItem(CFG_INTERVAL_KEY);
-  return v===null?60000:Number(v);
+// ── GITHUB TOKEN (NEW) ─────────────────────────────────────────────
+function loadGhToken(){return localStorage.getItem(CFG_GH_TOKEN_KEY)||'';}
+function saveGhToken(t){
+  if(t) localStorage.setItem(CFG_GH_TOKEN_KEY,t);
+  else  localStorage.removeItem(CFG_GH_TOKEN_KEY);
 }
 
-// Manual Accounts Storage
-function loadManualBalances(){
+/** Build headers for GitHub API — adds Authorization if token is set */
+function ghHeaders(){
+  const token = loadGhToken();
+  const h = { 'Accept': 'application/vnd.github+json' };
+  if(token) h['Authorization'] = 'Bearer ' + token;
+  return h;
+}
+
+/** Verify a GitHub token by hitting /user — updates UI in settings modal */
+async function verifyToken(){
+  const inp = $('ghTokenInput');
+  const token = (inp?.value||'').trim();
+  if(!token){
+    setAuthStatus('none','Token দেওয়া নেই — unauthenticated (60 req/hr)');
+    return;
+  }
+  setAuthStatus('checking','Verifying…');
   try{
-    const data = JSON.parse(localStorage.getItem(CFG_MANUAL_KEY));
-    if(Array.isArray(data)) return data;
-    return [];
-  } catch{
-    return [];
+    const res = await fetch('https://api.github.com/user',{
+      headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' }
+    });
+    if(res.status===200){
+      const j = await res.json();
+      // Get rate limit info
+      const rl = await fetch('https://api.github.com/rate_limit',{
+        headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' }
+      });
+      const rld = await rl.json();
+      const limit = rld?.resources?.core?.limit || 5000;
+      setAuthStatus('ok',`✓ @${j.login} — ${limit.toLocaleString()} req/hr`);
+    } else if(res.status===401){
+      setAuthStatus('bad','✗ Invalid token');
+    } else {
+      setAuthStatus('bad','✗ Error: HTTP '+res.status);
+    }
+  }catch(e){
+    setAuthStatus('bad','✗ Network error');
   }
 }
-function saveManualBalances(arr){
-  localStorage.setItem(CFG_MANUAL_KEY, JSON.stringify(arr));
+
+function setAuthStatus(state, msg){
+  const dot  = $('authDot');
+  const text = $('authStatusText');
+  if(!dot||!text) return;
+  dot.className  = 'auth-dot '+state;
+  text.className = 'auth-status-text '+state;
+  text.textContent = msg;
 }
 
-// ── GIST CONFIG ───────────────────────────────────────────────────
-function loadGistId(){ return localStorage.getItem(CFG_GIST_KEY)||''; }
-function saveGistId(id){ localStorage.setItem(CFG_GIST_KEY, id); }
+/** Sync auth status indicator when opening settings */
+function syncAuthStatusUI(){
+  const token = loadGhToken();
+  const inp = $('ghTokenInput');
+  if(inp) inp.value = token;
+  if(token){
+    setAuthStatus('ok','Token সংরক্ষিত আছে (verify করতে ক্লিক করুন)');
+  } else {
+    setAuthStatus('none','Token দেওয়া নেই — unauthenticated (60 req/hr)');
+  }
+  // Update refresh button indicator
+  const btn = $('refreshBtn');
+  if(btn){
+    btn.classList.remove('auth-ok','auth-warn');
+    if(token) btn.classList.add('auth-ok');
+  }
+}
 
+/** Show/hide rate-limit banner */
+function setRateLimitBanner(show){
+  const banner = $('rateLimitBanner');
+  if(banner) banner.classList.toggle('show', show);
+}
+
+// ── GIST ───────────────────────────────────────────────────────────
 async function fetchGistBalances(gistId){
   if(!gistId) return null;
   try{
     const res = await fetch(
       `https://api.github.com/gists/${gistId}`,
-      { headers:{ 'Accept':'application/vnd.github+json' } }
+      { headers: ghHeaders() }        // ← authenticated
     );
+    if(res.status===403||res.status===429){
+      // Rate limit hit
+      setRateLimitBanner(true);
+      console.warn('[USDT Portfolio] GitHub rate limit hit — add a token in Settings');
+      return null;
+    }
     if(!res.ok) throw new Error('HTTP '+res.status);
+    setRateLimitBanner(false);        // clear banner on success
     const json = await res.json();
     const content = json.files?.[GIST_FILENAME]?.content;
     if(!content) return null;
-    return JSON.parse(content); // { cloudbet:{balance,updatedAt}, ... }
+    return JSON.parse(content);
   }catch(e){
     console.warn('[USDT Portfolio] Gist fetch failed:', e.message);
     return null;
   }
 }
 
-// Gist data → manualBalances array-এ merge
 function mergeGistIntoManual(gistData){
   if(!gistData) return;
-  // পুরনো gist entries সরাই
-  manualBalances = manualBalances.filter(m => !m._gist);
-  // Gist-এ যা key/value আছে সব যোগ করি — key-ই label
-  Object.entries(gistData).forEach(([key, val])=>{
-    if(!val || typeof val.balance === 'undefined') return;
-    manualBalances.push({
-      name: key,
-      amount: Number(val.balance)||0,
-      updatedAt: val.updatedAt||null,
-      _gist: true,
-    });
+  manualBalances = manualBalances.filter(m=>!m._gist);
+  Object.entries(gistData).forEach(([key,val])=>{
+    if(!val||typeof val.balance==='undefined') return;
+    manualBalances.push({name:key,amount:Number(val.balance)||0,updatedAt:val.updatedAt||null,_gist:true});
   });
   saveManualBalances(manualBalances);
 }
 
-// RPC
+// ── RPC ────────────────────────────────────────────────────────────
 function buildCallData(addr){
   return '0x70a08231'+addr.slice(2).toLowerCase().padStart(64,'0');
 }
@@ -727,8 +840,7 @@ async function fetchBal(rpcs,usdtAddr,wallet,decimals){
   let last;
   for(const rpc of rpcs){
     try{
-      const r=await fetch(rpc,{method:'POST',
-        headers:{'Content-Type':'application/json'},
+      const r=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify(body),signal:AbortSignal.timeout(8000)});
       if(!r.ok)throw new Error('HTTP '+r.status);
       const j=await r.json();
@@ -739,7 +851,7 @@ async function fetchBal(rpcs,usdtAddr,wallet,decimals){
   throw last;
 }
 
-// STATE
+// ── STATE ──────────────────────────────────────────────────────────
 let addresses=[];
 let activeNets=['eth','bsc','pol'];
 let manualBalances=[];
@@ -747,16 +859,13 @@ let currentInterval=60000;
 let isRefreshing=false;
 let autoTimer=null;
 
-// ONBOARD
+// ── ONBOARD ────────────────────────────────────────────────────────
 function showOnboard(){
   $('onboard').classList.add('open');
   $('mainApp').style.display='none';
   obReset();
 }
-function obReset(){
-  const list=$('obList');list.innerHTML='';
-  obAddRow('');
-}
+function obReset(){const list=$('obList');list.innerHTML='';obAddRow('');}
 function obAddRow(val=''){
   const list=$('obList');
   const row=document.createElement('div');row.className='ob-row';
@@ -782,42 +891,32 @@ function handleAddrPaste(e,list,rowClass,addRowFn){
   const currentInput=e.target;
   currentInput.value=addrs[0];
   addrs.slice(1).forEach(a=>addRowFn(a));
-  const listId=list.id;
-  setTimeout(()=>checkDuplicates(listId,rowClass),0);
+  setTimeout(()=>checkDuplicates(list.id,rowClass),0);
   showToast(`✓ ${addrs.length}টি address যোগ হয়েছে`);
 }
 
 function checkDuplicates(listId,rowClass){
   const list=$(listId);if(!list)return;
   const rows=[...list.querySelectorAll('.'+rowClass)];
-  const vals=rows.map(r=>(r.querySelector('input').value.trim().toLowerCase()));
-  const counts={};
-  vals.forEach(v=>{if(v)counts[v]=(counts[v]||0)+1;});
+  const vals=rows.map(r=>r.querySelector('input').value.trim().toLowerCase());
+  const counts={};vals.forEach(v=>{if(v)counts[v]=(counts[v]||0)+1;});
   rows.forEach((row,i)=>{
-    const v=vals[i];
-    const isDup=v&&counts[v]>1;
-    const inp=row.querySelector('input');
-    inp.classList.toggle('dup',isDup);
+    const isDup=vals[i]&&counts[vals[i]]>1;
+    row.querySelector('input').classList.toggle('dup',isDup);
     row.classList.toggle('has-dup',isDup);
   });
 }
 function obSave(){
   const inputs=$('obList').querySelectorAll('input');
-  const vals=[...inputs].map(i=>i.value.trim());
-  const valid=vals.filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
-  if(!valid.length){
-    showToast('⚠️ কমপক্ষে একটি valid address দিন');return;
-  }
-  const unique=new Set(valid.map(v=>v.toLowerCase()));
-  if(unique.size!==valid.length){
-    showToast('⚠️ Duplicate address সরিয়ে দিন');return;
-  }
+  const valid=[...inputs].map(i=>i.value.trim()).filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
+  if(!valid.length){showToast('⚠️ কমপক্ষে একটি valid address দিন');return;}
+  if(new Set(valid.map(v=>v.toLowerCase())).size!==valid.length){showToast('⚠️ Duplicate address সরিয়ে দিন');return;}
   saveAddresses(valid);
   $('onboard').classList.remove('open');
   initApp();
 }
 
-// MAIN APP
+// ── MAIN APP ───────────────────────────────────────────────────────
 async function initApp(){
   addresses=loadAddresses();
   activeNets=loadNets();
@@ -827,11 +926,11 @@ async function initApp(){
   if(!addresses.length){showOnboard();return;}
   $('mainApp').style.display='block';
   applyNetFilter();
+  syncAuthStatusUI();
 
-  // Gist থেকে site balance pull করি (আগে, যাতে first render-এ দেখায়)
-  const gistId = loadGistId();
+  const gistId=loadGistId();
   if(gistId){
-    const gistData = await fetchGistBalances(gistId);
+    const gistData=await fetchGistBalances(gistId);
     mergeGistIntoManual(gistData);
   }
 
@@ -842,96 +941,66 @@ async function initApp(){
 }
 
 function relativeTime(iso){
-  if(!iso) return '';
-  const diff = Math.floor((Date.now()-new Date(iso))/1000);
-  if(diff<60) return `${diff}s ago`;
-  if(diff<3600) return `${Math.floor(diff/60)}m ago`;
-  return `${Math.floor(diff/3600)}h ago`;
+  if(!iso)return'';
+  const diff=Math.floor((Date.now()-new Date(iso))/1000);
+  if(diff<60)return`${diff}s ago`;
+  if(diff<3600)return`${Math.floor(diff/60)}m ago`;
+  return`${Math.floor(diff/3600)}h ago`;
 }
 
 function renderManualBadges(){
-  const container = $('manualNetsContainer');
-  if(!container) return;
-  if(!manualBalances.length){ container.innerHTML=''; return; }
-  container.innerHTML = manualBalances.map((item, index) => `
+  const container=$('manualNetsContainer');
+  if(!container)return;
+  if(!manualBalances.length){container.innerHTML='';return;}
+  container.innerHTML=manualBalances.map((item,index)=>`
     <div class="hero-net manual-edit-card" data-index="${index}"
-         style="border-color:${item._gist?'rgba(61,214,140,0.3)':'var(--gold-dim)'};
-                position:relative;">
-      <div class="hero-net-dot" style="background:${item._gist?'var(--green)':'var(--gold)'};"></div>
+         style="border-color:${item._gist?'rgba(61,214,140,0.3)':'var(--gold-dim)'};position:relative;">
+      <div class="hero-net-dot" style="background:${item._gist?'var(--green)':'var(--gold)'}"></div>
       <div class="hero-net-name" style="color:${item._gist?'var(--green)':'var(--text2)'}">
         ${item.name}${item._gist&&item.updatedAt?`<span style="font-size:9px;opacity:0.6;margin-left:3px">${relativeTime(item.updatedAt)}</span>`:''}
       </div>
       <div class="hero-net-val manual-edit-value"
-           style="color:${item._gist?'var(--green)':'var(--gold)'};"
+           style="color:${item._gist?'var(--green)':'var(--gold)'}"
            title="${item._gist?'Auto-synced from userscript':'Click to edit'}"
-           ${item._gist?'':`onclick="editManualAmount(${index}, this)"`}>
+           ${item._gist?'':`onclick="editManualAmount(${index},this)"`}>
         ${fmt(item.amount)}
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-
-// INLINE EDIT — Manual / Off-Chain amount
-function editManualAmount(index, el){
-  if(!manualBalances[index] || el.querySelector('input')) return;
-
-  const oldValue = Number(manualBalances[index].amount) || 0;
-
-  const input = document.createElement('input');
-  input.type = 'number';
-  input.step = 'any';
-  input.min = '0';
-  input.value = oldValue;
-  input.className = 'manual-inline-input';
-  input.setAttribute('aria-label', `${manualBalances[index].name} amount`);
-
-  el.innerHTML = '';
-  el.appendChild(input);
-  el.classList.add('editing');
-
-  input.focus();
-  input.select();
-
-  let finished = false;
-
-  const finish = (save) => {
-    if(finished) return;
-    finished = true;
-
+function editManualAmount(index,el){
+  if(!manualBalances[index]||el.querySelector('input'))return;
+  const oldValue=Number(manualBalances[index].amount)||0;
+  const input=document.createElement('input');
+  input.type='number';input.step='any';input.min='0';input.value=oldValue;
+  input.className='manual-inline-input';
+  el.innerHTML='';el.appendChild(input);el.classList.add('editing');
+  input.focus();input.select();
+  let finished=false;
+  const finish=(save)=>{
+    if(finished)return;finished=true;
     if(save){
-      const value = parseFloat(input.value);
-      if(Number.isFinite(value) && value >= 0){
-        manualBalances[index].amount = value;
+      const value=parseFloat(input.value);
+      if(Number.isFinite(value)&&value>=0){
+        manualBalances[index].amount=value;
         saveManualBalances(manualBalances);
-        renderManualBadges();
-        fetchAll();
-        showToast('✓ Amount updated');
-        return;
+        renderManualBadges();fetchAll();showToast('✓ Amount updated');return;
       }
     }
-
     renderManualBadges();
   };
-
-  input.addEventListener('keydown', e => {
-    if(e.key === 'Enter'){
-      e.preventDefault();
-      finish(true);
-    }else if(e.key === 'Escape'){
-      e.preventDefault();
-      finish(false);
-    }
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();finish(true);}
+    else if(e.key==='Escape'){e.preventDefault();finish(false);}
   });
-
-  input.addEventListener('blur', () => finish(true));
+  input.addEventListener('blur',()=>finish(true));
 }
 
 function buildWalletUI(){
   const list=$('walletsList');list.innerHTML='';
   $('walletCount').textContent=addresses.length;
   fmtHero(null);
-  NETS.forEach(k=>{const el=$(  'hero'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.textContent='—';});
+  NETS.forEach(k=>{const el=$('hero'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.textContent='—';});
   $('lastUpdate').textContent='';
 
   addresses.forEach((addr,i)=>{
@@ -962,10 +1031,7 @@ function buildWalletUI(){
   });
 }
 
-function toggleCard(i){
-  const card=$('wcard-'+i);
-  if(card)card.classList.toggle('expanded');
-}
+function toggleCard(i){const card=$('wcard-'+i);if(card)card.classList.toggle('expanded');}
 
 async function fetchAll(){
   if(isRefreshing)return;
@@ -981,23 +1047,21 @@ async function fetchAll(){
     const t=$('wctotal-'+i);if(t)t.textContent='—';
   });
 
-  // on-chain + gist fetch একসাথে
   const jobs=addresses.flatMap((addr,i)=>activeNets.map(k=>({addr,i,k})));
   const results=addresses.map(()=>Object.fromEntries(activeNets.map(k=>[k,null])));
 
-  const gistId = loadGistId();
-  const [, gistData] = await Promise.all([
+  const gistId=loadGistId();
+  const [,gistData]=await Promise.all([
     Promise.all(jobs.map(async({addr,i,k})=>{
       try{
         const net=NETWORKS[k];
         results[i][k]=await fetchBal(net.rpcs,net.usdt,addr,net.decimals);
-      }catch{ results[i][k]=null; }
+      }catch{results[i][k]=null;}
     })),
-    gistId ? fetchGistBalances(gistId) : Promise.resolve(null),
+    gistId?fetchGistBalances(gistId):Promise.resolve(null),
   ]);
 
-  // Gist merge
-  if(gistData){ mergeGistIntoManual(gistData); renderManualBadges(); }
+  if(gistData){mergeGistIntoManual(gistData);renderManualBadges();}
 
   const totals=Object.fromEntries(activeNets.map(k=>[k,0]));
   results.forEach((netMap,i)=>{
@@ -1010,16 +1074,14 @@ async function fetchAll(){
       } else {
         el.innerHTML=bal>0?`${fmt(bal)}<span class="usdt-unit">USDT</span>`:'0.00 <span class="usdt-unit">USDT</span>';
         el.className=bal>0?'chain-bal':'chain-bal zero';
-        addrSum+=bal;
-        totals[k]=(totals[k]||0)+bal;
+        addrSum+=bal;totals[k]=(totals[k]||0)+bal;
       }
     });
-    const t=$('wctotal-'+i);
-    if(t)t.textContent=fmt(addrSum)+' USDT';
+    const t=$('wctotal-'+i);if(t)t.textContent=fmt(addrSum)+' USDT';
   });
 
-  const manualTotal = manualBalances.reduce((s,m)=>s+(Number(m.amount)||0),0);
-  const grand = activeNets.reduce((s,k)=>s+(totals[k]||0),0) + manualTotal;
+  const manualTotal=manualBalances.reduce((s,m)=>s+(Number(m.amount)||0),0);
+  const grand=activeNets.reduce((s,k)=>s+(totals[k]||0),0)+manualTotal;
   $('heroTotal').classList.remove('loading');
   fmtHero(grand);
 
@@ -1039,46 +1101,29 @@ async function fetchAll(){
 function refreshAll(){fetchAll();}
 
 function toggleWalletsSection(){
-  const sec = $('walletsSection');
-  const collapsed = sec.classList.toggle('collapsed');
-  sec.classList.toggle('expanded', !collapsed);
-
-  localStorage.setItem(
-    'usdt_wallets_collapsed',
-    collapsed ? '1' : '0'
-  );
+  const sec=$('walletsSection');
+  const collapsed=sec.classList.toggle('collapsed');
+  sec.classList.toggle('expanded',!collapsed);
+  localStorage.setItem('usdt_wallets_collapsed',collapsed?'1':'0');
 }
-
 function loadWalletsSectionState(){
-  const sec = $('walletsSection');
-  if(!sec) return;
-
-  const collapsed = localStorage.getItem('usdt_wallets_collapsed') === '1';
-
-  sec.classList.toggle('collapsed', collapsed);
-  sec.classList.toggle('expanded', !collapsed);
+  const sec=$('walletsSection');if(!sec)return;
+  const collapsed=localStorage.getItem('usdt_wallets_collapsed')==='1';
+  sec.classList.toggle('collapsed',collapsed);sec.classList.toggle('expanded',!collapsed);
 }
 
-// AUTO-REFRESH (Only refreshes periodically in background, removed visibilitychange trigger)
 function startAutoRefresh(){
-  stopAutoRefresh();
-  if(currentInterval===0)return;
-  autoTimer=setInterval(()=>{
-    if(!document.hidden)fetchAll();
-  },currentInterval);
+  stopAutoRefresh();if(currentInterval===0)return;
+  autoTimer=setInterval(()=>{if(!document.hidden)fetchAll();},currentInterval);
 }
-function stopAutoRefresh(){
-  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
-}
+function stopAutoRefresh(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;}}
 
-// NET FILTER & INTERVAL CONFIG
 function applyNetFilter(){
   ['eth','bsc','pol'].forEach(k=>{
     const el=document.querySelector(`.hero-net.${k}`);
     if(el)el.style.display=activeNets.includes(k)?'flex':'none';
   });
 }
-
 function toggleNet(k){
   if(activeNets.includes(k)){
     if(activeNets.length===1){showToast('⚠️ কমপক্ষে একটি network রাখতে হবে');return;}
@@ -1088,37 +1133,28 @@ function toggleNet(k){
   }
   syncNetToggleUI();
 }
-
 function syncNetToggleUI(){
   ['eth','bsc','pol'].forEach(k=>{
     const el=$('cfg-'+k);if(!el)return;
     el.className='net-toggle'+(activeNets.includes(k)?' active-'+k:'');
   });
 }
-
-function selectInterval(ms){
-  currentInterval=ms;
-  syncIntervalUI();
-}
-
+function selectInterval(ms){currentInterval=ms;syncIntervalUI();}
 function syncIntervalUI(){
   document.querySelectorAll('.interval-opt').forEach(el=>{
     el.classList.toggle('active',Number(el.dataset.ms)===currentInterval);
   });
 }
 
-// SETTINGS MODAL
+// ── SETTINGS MODAL ─────────────────────────────────────────────────
 function openSettings(){
   const list=$('settingsList');list.innerHTML='';
   addresses.forEach(a=>settingsAddRow(a));
-
   const manualList=$('manualList');manualList.innerHTML='';
-  // _gist entries settings-এ দেখাব না (auto-managed)
-  manualBalances.filter(m=>!m._gist).forEach(m=>settingsAddManualRow(m.name, m.amount));
-
-  syncNetToggleUI();
-  syncIntervalUI();
+  manualBalances.filter(m=>!m._gist).forEach(m=>settingsAddManualRow(m.name,m.amount));
+  syncNetToggleUI();syncIntervalUI();
   const gi=$('gistIdInput');if(gi)gi.value=loadGistId();
+  syncAuthStatusUI();                          // ← sync token UI
   $('settingsOverlay').classList.add('open');
 }
 
@@ -1137,7 +1173,7 @@ function settingsAddRow(val=''){
   if(!val)setTimeout(()=>inp.focus(),50);
 }
 
-function settingsAddManualRow(name='', amt=''){
+function settingsAddManualRow(name='',amt=''){
   const list=$('manualList');
   const row=document.createElement('div');row.className='manual-row';
   row.innerHTML=`
@@ -1152,46 +1188,38 @@ function closeSettingsBtn(){$('settingsOverlay').classList.remove('open');}
 
 function saveSettings(){
   const inputs=$('settingsList').querySelectorAll('input');
-  const vals=[...inputs].map(i=>i.value.trim());
-  const valid=vals.filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
+  const valid=[...inputs].map(i=>i.value.trim()).filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
   if(!valid.length){showToast('⚠️ কমপক্ষে একটি valid address দিন');return;}
-  const unique=new Set(valid.map(v=>v.toLowerCase()));
-  if(unique.size!==valid.length){showToast('⚠️ Duplicate address সরিয়ে দিন');return;}
+  if(new Set(valid.map(v=>v.toLowerCase())).size!==valid.length){showToast('⚠️ Duplicate address সরিয়ে দিন');return;}
 
-  // manual rows (non-gist)
   const manualRows=$('manualList').querySelectorAll('.manual-row');
-  const userManual = [];
+  const userManual=[];
   manualRows.forEach(row=>{
-    const name = row.querySelector('.m-name').value.trim();
-    const amount = parseFloat(row.querySelector('.m-amt').value) || 0;
-    if(name) userManual.push({ name, amount });
+    const name=row.querySelector('.m-name').value.trim();
+    const amount=parseFloat(row.querySelector('.m-amt').value)||0;
+    if(name)userManual.push({name,amount});
   });
-  // _gist entries ধরে রাখি
-  const gistEntries = manualBalances.filter(m=>m._gist);
-  const newManual = [...userManual, ...gistEntries];
+  const gistEntries=manualBalances.filter(m=>m._gist);
+  const newManual=[...userManual,...gistEntries];
 
-  // Gist ID
-  const gistId = ($('gistIdInput')?.value||'').trim();
+  const gistId=($('gistIdInput')?.value||'').trim();
   saveGistId(gistId);
 
-  saveAddresses(valid);
-  saveNets(activeNets);
-  saveManualBalances(newManual);
-  localStorage.setItem(CFG_INTERVAL_KEY,String(currentInterval));
+  // ── Save GitHub token ──
+  const ghToken=($('ghTokenInput')?.value||'').trim();
+  saveGhToken(ghToken);
+  syncAuthStatusUI();
 
-  addresses=valid;
-  manualBalances=newManual;
+  saveAddresses(valid);saveNets(activeNets);saveManualBalances(newManual);
+  localStorage.setItem(CFG_INTERVAL_KEY,String(currentInterval));
+  addresses=valid;manualBalances=newManual;
 
   closeSettingsBtn();
   showToast('✓ Saved — balance refresh হচ্ছে');
-  applyNetFilter();
-  renderManualBadges();
-  buildWalletUI();
-  fetchAll();
-  startAutoRefresh();
+  applyNetFilter();renderManualBadges();buildWalletUI();fetchAll();startAutoRefresh();
 }
 
-// BOOT
+// ── BOOT ───────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',initApp);
 </script>
 </body>
