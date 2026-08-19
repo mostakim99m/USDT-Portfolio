@@ -699,29 +699,19 @@ async function fetchGistBalances(gistId){
   }
 }
 
-// Gist data → manualBalances array-এ merge (userscript-managed entries update করি)
-const GIST_SITE_LABELS = {
-  cloudbet:    'Cloudbet',
-  sportsbet:   'Sportsbet.io',
-  crystalpoker:'Crystalpoker',
-  epicbet:     'Epicbet',
-  '1win':      '1win',
-};
-
+// Gist data → manualBalances array-এ merge
 function mergeGistIntoManual(gistData){
   if(!gistData) return;
-  const gistKeys = Object.keys(GIST_SITE_LABELS);
-  // remove old gist-sourced entries
+  // পুরনো gist entries সরাই
   manualBalances = manualBalances.filter(m => !m._gist);
-  // add updated ones
-  gistKeys.forEach(key=>{
-    if(!gistData[key]) return;
-    const { balance, updatedAt } = gistData[key];
+  // Gist-এ যা key/value আছে সব যোগ করি — key-ই label
+  Object.entries(gistData).forEach(([key, val])=>{
+    if(!val || typeof val.balance === 'undefined') return;
     manualBalances.push({
-      name: GIST_SITE_LABELS[key],
-      amount: Number(balance)||0,
-      updatedAt,
-      _gist: true,   // flag — settings-এ দেখাবে না, auto-managed
+      name: key,
+      amount: Number(val.balance)||0,
+      updatedAt: val.updatedAt||null,
+      _gist: true,
     });
   });
   saveManualBalances(manualBalances);
