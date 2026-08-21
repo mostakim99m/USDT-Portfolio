@@ -356,6 +356,16 @@ canvas#balChart{position:absolute;inset:0;width:100%;height:100%}
 }
 .btn-cancel:hover{border-color:var(--border2);color:var(--text)}
 
+/* Gist sync badge on manual rows */
+.gist-sync-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;font-family:var(--mono);font-weight:600;
+  color:var(--green);letter-spacing:0.5px;
+  background:rgba(61,214,140,0.1);border:1px solid rgba(61,214,140,0.25);
+  border-radius:4px;padding:1px 5px;margin-left:4px;white-space:nowrap;
+  vertical-align:middle;
+}
+
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
   background:var(--s2);border:1px solid var(--border2);border-radius:10px;
@@ -501,7 +511,9 @@ canvas#balChart{position:absolute;inset:0;width:100%;height:100%}
     </button>
 
     <hr class="modal-divider">
-    <div class="modal-label">Manual / Off-Chain Balances</div>
+    <div class="modal-label">Manual / Off-Chain Balances
+      <span id="gistSyncStatusLabel" style="font-size:10px;color:var(--text3);text-transform:none;letter-spacing:0;margin-left:8px;font-weight:400"></span>
+    </div>
     <div class="manual-list" id="manualList"></div>
     <button class="add-row-btn" onclick="settingsAddManualRow()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -549,7 +561,8 @@ canvas#balChart{position:absolute;inset:0;width:100%;height:100%}
     </div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:var(--mono);line-height:1.6">
       Gist URL: github.com/gist/USERNAME/<strong>ID</strong><br>
-      Token: github.com/settings/tokens → scope: <strong>gist</strong>
+      Token: github.com/settings/tokens → scope: <strong>gist</strong><br>
+      <span style="color:var(--green)">✦</span> Manual balances save করলে Gist-এও push হবে।
     </div>
 
     <div class="modal-footer">
@@ -589,7 +602,6 @@ canvas#balChart{position:absolute;inset:0;width:100%;height:100%}
 
   <!-- HERO -->
   <div class="hero">
-    <!-- top row: amount + chart side by side -->
     <div class="hero-inner">
       <div class="hero-left">
         <div class="hero-label">Total Portfolio</div>
@@ -608,7 +620,6 @@ canvas#balChart{position:absolute;inset:0;width:100%;height:100%}
         </div>
       </div>
     </div>
-    <!-- badges + update below -->
     <div class="hero-nets" style="margin-top:16px">
       <div class="hero-net eth">
         <div class="hero-net-dot"></div>
@@ -629,6 +640,7 @@ canvas#balChart{position:absolute;inset:0;width:100%;height:100%}
     <div class="hero-nets" id="manualNetsContainer" style="margin-top:8px"></div>
     <div class="last-update" id="lastUpdate"></div>
   </div>
+
   <div class="wallets-section expanded" id="walletsSection">
     <div class="wallets-header" onclick="toggleWalletsSection()">
       <div class="wallets-header-left">
@@ -663,7 +675,7 @@ const CFG_MANUAL_KEY  = 'usdt_portfolio_manual';
 const CFG_GIST_KEY    = 'usdt_portfolio_gist_id';
 const CFG_TOKEN_KEY   = 'usdt_portfolio_gh_token';
 const CFG_HISTORY_KEY = 'usdt_portfolio_history';
-const HISTORY_MAX     = 30 * 24 * 60; // 30 days of per-minute points max → prune to ~720
+const HISTORY_MAX     = 30 * 24 * 60;
 const NETS = Object.keys(NETWORKS);
 
 // HELPERS
@@ -679,44 +691,19 @@ function fmtHero(n){
   $('heroCents').textContent='.'+d;
 }
 function shortAddr(a){return a.slice(0,8)+'...'+a.slice(-6)}
-
 function showToast(msg,ms=2200){
   const t=$('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),ms);
 }
 
 // STORAGE
-function loadAddresses(){
-  try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}
-}
-function saveAddresses(arr){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(arr));
-}
-
-function loadNets(){
-  try{return JSON.parse(localStorage.getItem(CFG_NETS_KEY))||['eth','bsc','pol'];}
-  catch{return['eth','bsc','pol'];}
-}
+function loadAddresses(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[];}catch{return[];}}
+function saveAddresses(arr){localStorage.setItem(STORAGE_KEY,JSON.stringify(arr));}
+function loadNets(){try{return JSON.parse(localStorage.getItem(CFG_NETS_KEY))||['eth','bsc','pol'];}catch{return['eth','bsc','pol'];}}
 function saveNets(arr){localStorage.setItem(CFG_NETS_KEY,JSON.stringify(arr));}
-
-function loadInterval(){
-  const v=localStorage.getItem(CFG_INTERVAL_KEY);
-  return v===null?60000:Number(v);
-}
-
-// Manual Accounts Storage
-function loadManualBalances(){
-  try{
-    const data = JSON.parse(localStorage.getItem(CFG_MANUAL_KEY));
-    if(Array.isArray(data)) return data;
-    return [];
-  } catch{
-    return [];
-  }
-}
-function saveManualBalances(arr){
-  localStorage.setItem(CFG_MANUAL_KEY, JSON.stringify(arr));
-}
+function loadInterval(){const v=localStorage.getItem(CFG_INTERVAL_KEY);return v===null?60000:Number(v);}
+function loadManualBalances(){try{const d=JSON.parse(localStorage.getItem(CFG_MANUAL_KEY));if(Array.isArray(d))return d;return[];}catch{return[];}}
+function saveManualBalances(arr){localStorage.setItem(CFG_MANUAL_KEY,JSON.stringify(arr));}
 
 // ── GIST CONFIG ───────────────────────────────────────────────────
 function loadGistId(){ return localStorage.getItem(CFG_GIST_KEY)||''; }
@@ -724,16 +711,17 @@ function saveGistId(id){ localStorage.setItem(CFG_GIST_KEY, id); }
 function loadGhToken(){ return localStorage.getItem(CFG_TOKEN_KEY)||''; }
 function saveGhToken(t){ localStorage.setItem(CFG_TOKEN_KEY, t); }
 
+// ── GIST FETCH (pull) ─────────────────────────────────────────────
+// Gist file naming convention:
+//   usdt-KEYNAME.json         → any key (userscript or manual)
+//   usdt-manual-SLUG.json     → manual entries pushed from this app
 async function fetchGistBalances(gistId){
   if(!gistId) return null;
   try{
     const token = loadGhToken();
     const headers = { 'Accept':'application/vnd.github+json' };
     if(token) headers['Authorization'] = `token ${token}`;
-    const res = await fetch(
-      `https://api.github.com/gists/${gistId}`,
-      { headers }
-    );
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
     if(!res.ok) throw new Error('HTTP '+res.status);
     const json = await res.json();
     const data = {};
@@ -750,19 +738,74 @@ async function fetchGistBalances(gistId){
   }
 }
 
-// Gist data → manualBalances array-এ merge
+// ── GIST PUSH (push manual balances → Gist) ──────────────────────
+// Each manual entry becomes: usdt-manual-SLUG.json → { balance, updatedAt, source }
+// Slug = lowercase name, spaces→dashes, strip non-alphanum except dash
+function toSlug(name){ return name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,''); }
+
+async function pushManualToGist(userManualEntries){
+  const gistId = loadGistId();
+  const token  = loadGhToken();
+  if(!gistId || !token) return false;  // no creds → skip silently
+
+  const now = new Date().toISOString();
+  const files = {};
+
+  userManualEntries.forEach(entry => {
+    if(!entry.name) return;
+    const slug = toSlug(entry.name);
+    if(!slug) return;
+    const filename = `usdt-manual-${slug}.json`;
+    files[filename] = {
+      content: JSON.stringify({
+        balance:   Number(entry.amount)||0,
+        updatedAt: now,
+        source:    'portfolio-app',
+        label:     entry.name,
+      }, null, 2)
+    };
+  });
+
+  if(!Object.keys(files).length) return true;
+
+  try{
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      method: 'PATCH',
+      headers: {
+        'Accept':        'application/vnd.github+json',
+        'Authorization': `token ${token}`,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({ files }),
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return true;
+  }catch(e){
+    console.warn('[USDT Portfolio] Gist push failed:', e.message);
+    return false;
+  }
+}
+
+// ── GIST MERGE INTO MANUAL ────────────────────────────────────────
+// _gist=true entries = pulled from Gist (both userscript & pushed-manual)
+// We keep user-managed entries (_gist=false) untouched.
 function mergeGistIntoManual(gistData){
   if(!gistData) return;
-  // পুরনো gist entries সরাই
+  // Remove old gist-sourced entries
   manualBalances = manualBalances.filter(m => !m._gist);
-  // Gist-এ যা key/value আছে সব যোগ করি — key-ই label
   Object.entries(gistData).forEach(([key, val])=>{
     if(!val || typeof val.balance === 'undefined') return;
+    // Derive display label: prefer val.label, else humanise key
+    // Strip "manual-" prefix for manually pushed entries
+    let label = val.label || key.replace(/^manual-/,'').replace(/-/g,' ');
+    // Title-case
+    label = label.replace(/\b\w/g, c=>c.toUpperCase());
     manualBalances.push({
-      name: key,
-      amount: Number(val.balance)||0,
+      name:      label,
+      amount:    Number(val.balance)||0,
       updatedAt: val.updatedAt||null,
-      _gist: true,
+      source:    val.source||'userscript',
+      _gist:     true,
     });
   });
   saveManualBalances(manualBalances);
@@ -800,31 +843,20 @@ let autoTimer=null;
 let chartRange='1D';
 
 // ── HISTORY ──────────────────────────────────────────────────────
-function loadHistory(){
-  try{ return JSON.parse(localStorage.getItem(CFG_HISTORY_KEY))||[]; }
-  catch{ return []; }
-}
-function saveHistory(arr){ localStorage.setItem(CFG_HISTORY_KEY, JSON.stringify(arr)); }
+function loadHistory(){try{return JSON.parse(localStorage.getItem(CFG_HISTORY_KEY))||[];}catch{return[];}}
+function saveHistory(arr){localStorage.setItem(CFG_HISTORY_KEY,JSON.stringify(arr));}
 function pushHistory(total){
-  const history = loadHistory();
-  history.push({ t: Date.now(), v: total });
-  // 30일분만 보관 (최대 2880개 → 30분 간격 기준)
-  const cutoff = Date.now() - 30*24*60*60*1000;
-  const pruned = history.filter(p=>p.t>=cutoff);
+  const history=loadHistory();
+  history.push({t:Date.now(),v:total});
+  const cutoff=Date.now()-30*24*60*60*1000;
+  const pruned=history.filter(p=>p.t>=cutoff);
   saveHistory(pruned);
   return pruned;
 }
 
 // ONBOARD
-function showOnboard(){
-  $('onboard').classList.add('open');
-  $('mainApp').style.display='none';
-  obReset();
-}
-function obReset(){
-  const list=$('obList');list.innerHTML='';
-  obAddRow('');
-}
+function showOnboard(){$('onboard').classList.add('open');$('mainApp').style.display='none';obReset();}
+function obReset(){const list=$('obList');list.innerHTML='';obAddRow('');}
 function obAddRow(val=''){
   const list=$('obList');
   const row=document.createElement('div');row.className='ob-row';
@@ -859,27 +891,21 @@ function checkDuplicates(listId,rowClass){
   const list=$(listId);if(!list)return;
   const rows=[...list.querySelectorAll('.'+rowClass)];
   const vals=rows.map(r=>(r.querySelector('input').value.trim().toLowerCase()));
-  const counts={};
-  vals.forEach(v=>{if(v)counts[v]=(counts[v]||0)+1;});
+  const counts={};vals.forEach(v=>{if(v)counts[v]=(counts[v]||0)+1;});
   rows.forEach((row,i)=>{
-    const v=vals[i];
-    const isDup=v&&counts[v]>1;
+    const v=vals[i];const isDup=v&&counts[v]>1;
     const inp=row.querySelector('input');
-    inp.classList.toggle('dup',isDup);
-    row.classList.toggle('has-dup',isDup);
+    inp.classList.toggle('dup',isDup);row.classList.toggle('has-dup',isDup);
   });
 }
+
 function obSave(){
   const inputs=$('obList').querySelectorAll('input');
   const vals=[...inputs].map(i=>i.value.trim());
   const valid=vals.filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
-  if(!valid.length){
-    showToast('⚠️ কমপক্ষে একটি valid address দিন');return;
-  }
+  if(!valid.length){showToast('⚠️ কমপক্ষে একটি valid address দিন');return;}
   const unique=new Set(valid.map(v=>v.toLowerCase()));
-  if(unique.size!==valid.length){
-    showToast('⚠️ Duplicate address সরিয়ে দিন');return;
-  }
+  if(unique.size!==valid.length){showToast('⚠️ Duplicate address সরিয়ে দিন');return;}
   saveAddresses(valid);
   $('onboard').classList.remove('open');
   initApp();
@@ -896,14 +922,12 @@ async function initApp(){
   $('mainApp').style.display='block';
   applyNetFilter();
 
-  // পুরনো history থেকে chart দেখাই (fetch-এর আগেই)
-  const existingHistory = loadHistory();
+  const existingHistory=loadHistory();
   if(existingHistory.length>=2) renderChart(existingHistory);
 
-  // Gist থেকে site balance pull করি (আগে, যাতে first render-এ দেখায়)
-  const gistId = loadGistId();
+  const gistId=loadGistId();
   if(gistId){
-    const gistData = await fetchGistBalances(gistId);
+    const gistData=await fetchGistBalances(gistId);
     mergeGistIntoManual(gistData);
   }
 
@@ -915,95 +939,99 @@ async function initApp(){
 
 function relativeTime(iso){
   if(!iso) return '';
-  const diff = Math.floor((Date.now()-new Date(iso))/1000);
+  const diff=Math.floor((Date.now()-new Date(iso))/1000);
   if(diff<60) return `${diff}s ago`;
   if(diff<3600) return `${Math.floor(diff/60)}m ago`;
   return `${Math.floor(diff/3600)}h ago`;
 }
 
 function renderManualBadges(){
-  const container = $('manualNetsContainer');
+  const container=$('manualNetsContainer');
   if(!container) return;
-  if(!manualBalances.length){ container.innerHTML=''; return; }
-  container.innerHTML = manualBalances.map((item, index) => `
-    <div class="hero-net manual-edit-card" data-index="${index}"
-         style="border-color:${item._gist?'rgba(61,214,140,0.3)':'var(--gold-dim)'};
-                position:relative;">
-      <div class="hero-net-dot" style="background:${item._gist?'var(--green)':'var(--gold)'};"></div>
-      <div class="hero-net-name" style="color:${item._gist?'var(--green)':'var(--text2)'}">
-        ${item.name}${item._gist&&item.updatedAt?`<span style="font-size:9px;opacity:0.6;margin-left:3px">${relativeTime(item.updatedAt)}</span>`:''}
+  if(!manualBalances.length){container.innerHTML='';return;}
+  container.innerHTML=manualBalances.map((item,index)=>{
+    const isUserscript = item._gist && item.source !== 'portfolio-app';
+    const isAppPushed  = item._gist && item.source === 'portfolio-app';
+    const isLocal      = !item._gist;
+
+    let dotColor, valColor, borderColor, badgeHtml='', editAttr='';
+
+    if(isUserscript){
+      dotColor='var(--green)';valColor='var(--green)';borderColor='rgba(61,214,140,0.3)';
+      badgeHtml=`<span class="gist-sync-badge">🔗 script</span>`;
+    } else if(isAppPushed){
+      dotColor='var(--eth-c)';valColor='var(--eth-c)';borderColor='rgba(155,142,255,0.3)';
+      badgeHtml=`<span class="gist-sync-badge">☁ synced</span>`;
+      editAttr=`onclick="editManualAmount(${index}, this)"`;
+    } else {
+      dotColor='var(--gold)';valColor='var(--gold)';borderColor='var(--border)';
+      editAttr=`onclick="editManualAmount(${index}, this)"`;
+    }
+
+    const timeHtml = item.updatedAt
+      ? `<span style="font-size:9px;opacity:0.55;margin-left:3px">${relativeTime(item.updatedAt)}</span>`
+      : '';
+
+    return `<div class="hero-net manual-edit-card" data-index="${index}"
+         style="border-color:${borderColor};position:relative;">
+      <div class="hero-net-dot" style="background:${dotColor}"></div>
+      <div class="hero-net-name" style="color:var(--text2)">
+        ${item.name}${timeHtml}${badgeHtml}
       </div>
       <div class="hero-net-val manual-edit-value"
-           style="color:${item._gist?'var(--green)':'var(--gold)'};"
-           title="${item._gist?'Auto-synced from userscript':'Click to edit'}"
-           ${item._gist?'':`onclick="editManualAmount(${index}, this)"`}>
+           style="color:${valColor};"
+           title="${isUserscript?'Auto-synced from userscript':'Click to edit'}"
+           ${editAttr}>
         ${fmt(item.amount)}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
-
-// INLINE EDIT — Manual / Off-Chain amount
+// INLINE EDIT — manual amount (local & app-pushed entries only)
 function editManualAmount(index, el){
-  if(!manualBalances[index] || el.querySelector('input')) return;
-
-  const oldValue = Number(manualBalances[index].amount) || 0;
-
-  const input = document.createElement('input');
-  input.type = 'number';
-  input.step = 'any';
-  input.min = '0';
-  input.value = oldValue;
-  input.className = 'manual-inline-input';
-  input.setAttribute('aria-label', `${manualBalances[index].name} amount`);
-
-  el.innerHTML = '';
-  el.appendChild(input);
-  el.classList.add('editing');
-
-  input.focus();
-  input.select();
-
-  let finished = false;
-
-  const finish = (save) => {
-    if(finished) return;
-    finished = true;
-
+  if(!manualBalances[index]||el.querySelector('input'))return;
+  const oldValue=Number(manualBalances[index].amount)||0;
+  const input=document.createElement('input');
+  input.type='number';input.step='any';input.min='0';input.value=oldValue;
+  input.className='manual-inline-input';
+  el.innerHTML='';el.appendChild(input);el.classList.add('editing');
+  input.focus();input.select();
+  let finished=false;
+  const finish=async(save)=>{
+    if(finished)return;finished=true;
     if(save){
-      const value = parseFloat(input.value);
-      if(Number.isFinite(value) && value >= 0){
-        manualBalances[index].amount = value;
+      const value=parseFloat(input.value);
+      if(Number.isFinite(value)&&value>=0){
+        manualBalances[index].amount=value;
+        manualBalances[index].updatedAt=new Date().toISOString();
         saveManualBalances(manualBalances);
         renderManualBadges();
+        // Push to Gist if this is a synced entry
+        if(manualBalances[index]._gist){
+          const ok=await pushManualToGist([manualBalances[index]]);
+          showToast(ok?'✓ Gist-এ push হয়েছে':'✓ Local saved (Gist push failed)');
+        } else {
+          showToast('✓ Amount updated');
+        }
         fetchAll();
-        showToast('✓ Amount updated');
         return;
       }
     }
-
     renderManualBadges();
   };
-
-  input.addEventListener('keydown', e => {
-    if(e.key === 'Enter'){
-      e.preventDefault();
-      finish(true);
-    }else if(e.key === 'Escape'){
-      e.preventDefault();
-      finish(false);
-    }
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();finish(true);}
+    else if(e.key==='Escape'){e.preventDefault();finish(false);}
   });
-
-  input.addEventListener('blur', () => finish(true));
+  input.addEventListener('blur',()=>finish(true));
 }
 
 function buildWalletUI(){
   const list=$('walletsList');list.innerHTML='';
   $('walletCount').textContent=addresses.length;
   fmtHero(null);
-  NETS.forEach(k=>{const el=$(  'hero'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.textContent='—';});
+  NETS.forEach(k=>{const el=$('hero'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.textContent='—';});
   $('lastUpdate').textContent='';
 
   addresses.forEach((addr,i)=>{
@@ -1034,10 +1062,7 @@ function buildWalletUI(){
   });
 }
 
-function toggleCard(i){
-  const card=$('wcard-'+i);
-  if(card)card.classList.toggle('expanded');
-}
+function toggleCard(i){const card=$('wcard-'+i);if(card)card.classList.toggle('expanded');}
 
 async function fetchAll(){
   if(isRefreshing)return;
@@ -1053,23 +1078,18 @@ async function fetchAll(){
     const t=$('wctotal-'+i);if(t)t.textContent='—';
   });
 
-  // on-chain + gist fetch একসাথে
   const jobs=addresses.flatMap((addr,i)=>activeNets.map(k=>({addr,i,k})));
   const results=addresses.map(()=>Object.fromEntries(activeNets.map(k=>[k,null])));
 
-  const gistId = loadGistId();
-  const [, gistData] = await Promise.all([
+  const gistId=loadGistId();
+  const[,gistData]=await Promise.all([
     Promise.all(jobs.map(async({addr,i,k})=>{
-      try{
-        const net=NETWORKS[k];
-        results[i][k]=await fetchBal(net.rpcs,net.usdt,addr,net.decimals);
-      }catch{ results[i][k]=null; }
+      try{const net=NETWORKS[k];results[i][k]=await fetchBal(net.rpcs,net.usdt,addr,net.decimals);}catch{results[i][k]=null;}
     })),
-    gistId ? fetchGistBalances(gistId) : Promise.resolve(null),
+    gistId?fetchGistBalances(gistId):Promise.resolve(null),
   ]);
 
-  // Gist merge
-  if(gistData){ mergeGistIntoManual(gistData); renderManualBadges(); }
+  if(gistData){mergeGistIntoManual(gistData);renderManualBadges();}
 
   const totals=Object.fromEntries(activeNets.map(k=>[k,0]));
   results.forEach((netMap,i)=>{
@@ -1077,21 +1097,18 @@ async function fetchAll(){
     activeNets.forEach(k=>{
       const el=$(`cbal-${i}-${k}`);if(!el)return;
       const bal=netMap[k];
-      if(bal===null){
-        el.className='chain-bal err';el.textContent='RPC error';
-      } else {
+      if(bal===null){el.className='chain-bal err';el.textContent='RPC error';}
+      else{
         el.innerHTML=bal>0?`${fmt(bal)}<span class="usdt-unit">USDT</span>`:'0.00 <span class="usdt-unit">USDT</span>';
         el.className=bal>0?'chain-bal':'chain-bal zero';
-        addrSum+=bal;
-        totals[k]=(totals[k]||0)+bal;
+        addrSum+=bal;totals[k]=(totals[k]||0)+bal;
       }
     });
-    const t=$('wctotal-'+i);
-    if(t)t.textContent=fmt(addrSum)+' USDT';
+    const t=$('wctotal-'+i);if(t)t.textContent=fmt(addrSum)+' USDT';
   });
 
-  const manualTotal = manualBalances.reduce((s,m)=>s+(Number(m.amount)||0),0);
-  const grand = activeNets.reduce((s,k)=>s+(totals[k]||0),0) + manualTotal;
+  const manualTotal=manualBalances.reduce((s,m)=>s+(Number(m.amount)||0),0);
+  const grand=activeNets.reduce((s,k)=>s+(totals[k]||0),0)+manualTotal;
   $('heroTotal').classList.remove('loading');
   fmtHero(grand);
 
@@ -1105,11 +1122,7 @@ async function fetchAll(){
   const now=new Date();
   $('lastUpdate').textContent='Updated '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
 
-  // history save + chart update
-  if(grand>0){
-    const history = pushHistory(grand);
-    renderChart(history);
-  }
+  if(grand>0){const history=pushHistory(grand);renderChart(history);}
 
   $('refreshIcon').classList.remove('spin-anim');
   isRefreshing=false;
@@ -1117,132 +1130,68 @@ async function fetchAll(){
 
 // ── CHART ─────────────────────────────────────────────────────────
 function setChartRange(range){
-  chartRange = range;
-  document.querySelectorAll('.chart-tab').forEach(t=>{
-    t.classList.toggle('active', t.textContent===range);
-  });
+  chartRange=range;
+  document.querySelectorAll('.chart-tab').forEach(t=>{t.classList.toggle('active',t.textContent===range);});
   renderChart(loadHistory());
 }
 
 function renderChart(history){
-  const wrap = $('chartWrap');
-  const canvas = $('balChart');
-  const empty = $('chartEmpty');
-  if(!wrap||!canvas) return;
-
-  const msMap = {'1D':86400000,'7D':7*86400000,'30D':30*86400000};
-  const cutoff = Date.now() - (msMap[chartRange]||86400000);
-  let points = history.filter(p=>p.t>=cutoff);
-
-  if(points.length>120){
-    const step = Math.ceil(points.length/120);
-    points = points.filter((_,i)=>i%step===0);
-  }
-
+  const wrap=$('chartWrap');const canvas=$('balChart');const empty=$('chartEmpty');
+  if(!wrap||!canvas)return;
+  const msMap={'1D':86400000,'7D':7*86400000,'30D':30*86400000};
+  const cutoff=Date.now()-(msMap[chartRange]||86400000);
+  let points=history.filter(p=>p.t>=cutoff);
+  if(points.length>120){const step=Math.ceil(points.length/120);points=points.filter((_,i)=>i%step===0);}
   wrap.style.display='flex';
-
-  if(points.length<2){
-    canvas.style.display='none';
-    empty.style.display='flex';
-    return;
-  }
-  canvas.style.display='block';
-  empty.style.display='none';
-
-  // double rAF — first paint, then measure
+  if(points.length<2){canvas.style.display='none';empty.style.display='flex';return;}
+  canvas.style.display='block';empty.style.display='none';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const dpr = window.devicePixelRatio||1;
-    const canvasWrap = canvas.parentElement;
-    const W = canvasWrap.offsetWidth  || 200;
-    const H = canvasWrap.offsetHeight || 56;
-    if(W===0||H===0) return;
-
-    canvas.width  = W*dpr;
-    canvas.height = H*dpr;
-    canvas.style.width  = W+'px';
-    canvas.style.height = H+'px';
-
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr,dpr);
-    ctx.clearRect(0,0,W,H);
-
-    const vals = points.map(p=>p.v);
-    const min  = Math.min(...vals);
-    const max  = Math.max(...vals);
-    const range = max-min || 1;
-
-    const px = i => (i/(points.length-1))*W;
-    const py = v => H - 2 - ((v-min)/range)*(H-8);
-
-    // gradient fill
-    const grad = ctx.createLinearGradient(0,0,0,H);
-    grad.addColorStop(0,'rgba(240,192,64,0.20)');
-    grad.addColorStop(1,'rgba(240,192,64,0)');
-
-    ctx.beginPath();
-    ctx.moveTo(px(0), py(vals[0]));
-    for(let i=1;i<points.length;i++) ctx.lineTo(px(i), py(vals[i]));
-    ctx.lineTo(px(points.length-1), H);
-    ctx.lineTo(0, H);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // line
-    ctx.beginPath();
-    ctx.moveTo(px(0), py(vals[0]));
-    for(let i=1;i<points.length;i++) ctx.lineTo(px(i), py(vals[i]));
-    ctx.strokeStyle = 'rgba(240,192,64,0.9)';
-    ctx.lineWidth   = 1.5;
-    ctx.lineJoin    = 'round';
-    ctx.stroke();
-
-    // last dot
-    const lx = px(points.length-1);
-    const ly = py(vals[vals.length-1]);
-    ctx.beginPath();
-    ctx.arc(lx, ly, 2.5, 0, Math.PI*2);
-    ctx.fillStyle = '#F0C040';
-    ctx.fill();
+    const dpr=window.devicePixelRatio||1;
+    const canvasWrap=canvas.parentElement;
+    const W=canvasWrap.offsetWidth||200;const H=canvasWrap.offsetHeight||56;
+    if(W===0||H===0)return;
+    canvas.width=W*dpr;canvas.height=H*dpr;
+    canvas.style.width=W+'px';canvas.style.height=H+'px';
+    const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+    const vals=points.map(p=>p.v);
+    const min=Math.min(...vals);const max=Math.max(...vals);const range=max-min||1;
+    const px=i=>(i/(points.length-1))*W;
+    const py=v=>H-2-((v-min)/range)*(H-8);
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'rgba(240,192,64,0.20)');grad.addColorStop(1,'rgba(240,192,64,0)');
+    ctx.beginPath();ctx.moveTo(px(0),py(vals[0]));
+    for(let i=1;i<points.length;i++)ctx.lineTo(px(i),py(vals[i]));
+    ctx.lineTo(px(points.length-1),H);ctx.lineTo(0,H);ctx.closePath();
+    ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();ctx.moveTo(px(0),py(vals[0]));
+    for(let i=1;i<points.length;i++)ctx.lineTo(px(i),py(vals[i]));
+    ctx.strokeStyle='rgba(240,192,64,0.9)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.stroke();
+    const lx=px(points.length-1);const ly=py(vals[vals.length-1]);
+    ctx.beginPath();ctx.arc(lx,ly,2.5,0,Math.PI*2);ctx.fillStyle='#F0C040';ctx.fill();
   }));
 }
 
 function refreshAll(){fetchAll();}
 
 function toggleWalletsSection(){
-  const sec = $('walletsSection');
-  const collapsed = sec.classList.toggle('collapsed');
-  sec.classList.toggle('expanded', !collapsed);
-
-  localStorage.setItem(
-    'usdt_wallets_collapsed',
-    collapsed ? '1' : '0'
-  );
+  const sec=$('walletsSection');
+  const collapsed=sec.classList.toggle('collapsed');
+  sec.classList.toggle('expanded',!collapsed);
+  localStorage.setItem('usdt_wallets_collapsed',collapsed?'1':'0');
 }
 
 function loadWalletsSectionState(){
-  const sec = $('walletsSection');
-  if(!sec) return;
-
-  const collapsed = localStorage.getItem('usdt_wallets_collapsed') === '1';
-
-  sec.classList.toggle('collapsed', collapsed);
-  sec.classList.toggle('expanded', !collapsed);
+  const sec=$('walletsSection');if(!sec)return;
+  const collapsed=localStorage.getItem('usdt_wallets_collapsed')==='1';
+  sec.classList.toggle('collapsed',collapsed);sec.classList.toggle('expanded',!collapsed);
 }
 
-// AUTO-REFRESH (Only refreshes periodically in background, removed visibilitychange trigger)
 function startAutoRefresh(){
-  stopAutoRefresh();
-  if(currentInterval===0)return;
-  autoTimer=setInterval(()=>{
-    if(!document.hidden)fetchAll();
-  },currentInterval);
+  stopAutoRefresh();if(currentInterval===0)return;
+  autoTimer=setInterval(()=>{if(!document.hidden)fetchAll();},currentInterval);
 }
-function stopAutoRefresh(){
-  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
-}
+function stopAutoRefresh(){if(autoTimer){clearInterval(autoTimer);autoTimer=null;}}
 
-// NET FILTER & INTERVAL CONFIG
 function applyNetFilter(){
   ['eth','bsc','pol'].forEach(k=>{
     const el=document.querySelector(`.hero-net.${k}`);
@@ -1254,7 +1203,7 @@ function toggleNet(k){
   if(activeNets.includes(k)){
     if(activeNets.length===1){showToast('⚠️ কমপক্ষে একটি network রাখতে হবে');return;}
     activeNets=activeNets.filter(n=>n!==k);
-  } else {
+  }else{
     activeNets=['eth','bsc','pol'].filter(n=>activeNets.includes(n)||n===k);
   }
   syncNetToggleUI();
@@ -1267,11 +1216,7 @@ function syncNetToggleUI(){
   });
 }
 
-function selectInterval(ms){
-  currentInterval=ms;
-  syncIntervalUI();
-}
-
+function selectInterval(ms){currentInterval=ms;syncIntervalUI();}
 function syncIntervalUI(){
   document.querySelectorAll('.interval-opt').forEach(el=>{
     el.classList.toggle('active',Number(el.dataset.ms)===currentInterval);
@@ -1284,14 +1229,28 @@ function openSettings(){
   addresses.forEach(a=>settingsAddRow(a));
 
   const manualList=$('manualList');manualList.innerHTML='';
-  // _gist entries settings-এ দেখাব না (auto-managed)
-  manualBalances.filter(m=>!m._gist).forEach(m=>settingsAddManualRow(m.name, m.amount));
+  // Show all manual entries in settings; _gist=app-pushed are editable, userscript ones are readonly
+  manualBalances.forEach(m=>{
+    if(m._gist && m.source!=='portfolio-app'){
+      // Userscript entry → show as read-only info row
+      settingsAddManualRowReadonly(m.name, m.amount, m.updatedAt);
+    } else {
+      settingsAddManualRow(m.name, m.amount, m._gist);
+    }
+  });
 
-  syncNetToggleUI();
-  syncIntervalUI();
+  syncNetToggleUI();syncIntervalUI();
   const gi=$('gistIdInput');if(gi)gi.value=loadGistId();
   const gt=$('ghTokenInput');if(gt)gt.value=loadGhToken();
   $('settingsOverlay').classList.add('open');
+
+  // Gist status label
+  const label=$('gistSyncStatusLabel');
+  if(label){
+    const gistId=loadGistId();
+    label.textContent = gistId ? `☁ Gist sync ON` : '';
+    label.style.color = gistId ? 'var(--green)' : 'var(--text3)';
+  }
 }
 
 function settingsAddRow(val=''){
@@ -1309,20 +1268,44 @@ function settingsAddRow(val=''){
   if(!val)setTimeout(()=>inp.focus(),50);
 }
 
-function settingsAddManualRow(name='', amt=''){
+function settingsAddManualRow(name='', amt='', isSynced=false){
   const list=$('manualList');
   const row=document.createElement('div');row.className='manual-row';
+  const syncBadge = isSynced
+    ? `<span class="gist-sync-badge" title="Synced to Gist">☁</span>`
+    : '';
   row.innerHTML=`
-    <input type="text" class="m-name" placeholder="Name (e.g. Binance)" value="${name}">
-    <input type="number" class="m-amt" placeholder="Amount" value="${amt}">
+    <div style="flex:1;min-width:0;position:relative">
+      <input type="text" class="m-name" placeholder="Name (e.g. Binance)" value="${name}">
+      <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%)">${syncBadge}</span>
+    </div>
+    <input type="number" class="m-amt" placeholder="Amount" value="${amt}" step="any" min="0">
     <button class="del-btn" onclick="this.closest('.manual-row').remove()" title="Remove">✕</button>`;
+  list.appendChild(row);
+}
+
+function settingsAddManualRowReadonly(name, amt, updatedAt){
+  const list=$('manualList');
+  const row=document.createElement('div');row.className='manual-row';
+  const timeStr = updatedAt ? ` · ${relativeTime(updatedAt)}` : '';
+  row.innerHTML=`
+    <div style="flex:1;display:flex;align-items:center;gap:8px;
+         background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+      <span style="font-size:11px;font-family:var(--mono);color:var(--text2);flex:1">${name}</span>
+      <span class="gist-sync-badge">🔗 script${timeStr}</span>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;
+         padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--green);width:110px;text-align:right">
+      ${fmt(Number(amt))}
+    </div>
+    <div style="width:32px"></div>`;
   list.appendChild(row);
 }
 
 function closeSettings(e){if(e.target===$('settingsOverlay'))closeSettingsBtn();}
 function closeSettingsBtn(){$('settingsOverlay').classList.remove('open');}
 
-function saveSettings(){
+async function saveSettings(){
   const inputs=$('settingsList').querySelectorAll('input');
   const vals=[...inputs].map(i=>i.value.trim());
   const valid=vals.filter(v=>/^0x[0-9a-fA-F]{40}$/.test(v));
@@ -1330,21 +1313,25 @@ function saveSettings(){
   const unique=new Set(valid.map(v=>v.toLowerCase()));
   if(unique.size!==valid.length){showToast('⚠️ Duplicate address সরিয়ে দিন');return;}
 
-  // manual rows (non-gist)
+  // Collect editable manual rows (skip readonly script rows)
   const manualRows=$('manualList').querySelectorAll('.manual-row');
-  const userManual = [];
+  const userManual=[];
   manualRows.forEach(row=>{
-    const name = row.querySelector('.m-name').value.trim();
-    const amount = parseFloat(row.querySelector('.m-amt').value) || 0;
-    if(name) userManual.push({ name, amount });
+    const nameEl=row.querySelector('.m-name');
+    const amtEl=row.querySelector('.m-amt');
+    if(!nameEl||!amtEl)return; // readonly row
+    const name=nameEl.value.trim();
+    const amount=parseFloat(amtEl.value)||0;
+    if(name)userManual.push({name,amount});
   });
-  // _gist entries ধরে রাখি
-  const gistEntries = manualBalances.filter(m=>m._gist);
-  const newManual = [...userManual, ...gistEntries];
 
-  // Gist ID
-  const gistId = ($('gistIdInput')?.value||'').trim();
-  const ghToken = ($('ghTokenInput')?.value||'').trim();
+  // Preserve gist-userscript entries; rebuild with user manual entries
+  const gistScriptEntries=manualBalances.filter(m=>m._gist&&m.source!=='portfolio-app');
+  const newManual=[...userManual,...gistScriptEntries];
+
+  // Gist ID / token
+  const gistId=($('gistIdInput')?.value||'').trim();
+  const ghToken=($('ghTokenInput')?.value||'').trim();
   saveGistId(gistId);
   saveGhToken(ghToken);
 
@@ -1357,7 +1344,23 @@ function saveSettings(){
   manualBalances=newManual;
 
   closeSettingsBtn();
-  showToast('✓ Saved — balance refresh হচ্ছে');
+
+  // Push user manual entries to Gist
+  if(gistId&&ghToken&&userManual.length){
+    showToast('💾 Saving & syncing to Gist…',3000);
+    const ok=await pushManualToGist(userManual);
+    if(ok){
+      showToast('✓ Saved & Gist sync হয়েছে');
+      // Pull back to tag with _gist:true & updatedAt
+      const gistData=await fetchGistBalances(gistId);
+      mergeGistIntoManual(gistData);
+    } else {
+      showToast('✓ Local saved — Gist sync ব্যর্থ');
+    }
+  } else {
+    showToast('✓ Saved — balance refresh হচ্ছে');
+  }
+
   applyNetFilter();
   renderManualBadges();
   buildWalletUI();
