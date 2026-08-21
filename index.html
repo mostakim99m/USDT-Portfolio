@@ -983,14 +983,28 @@ function relativeTime(iso){
   return `${Math.floor(diff/3600)}h ago`;
 }
 
+function sortedManualEntries(){
+  // Attach original array index before sorting so editManualAmount stays correct
+  const indexed = manualBalances.map((item, origIdx) => ({ item, origIdx }));
+  // Group: 0 = local/app-synced (editable), 1 = userscript (auto)
+  const group = ({ item }) =>
+    (item._gist && item.source !== 'portfolio-app') ? 1 : 0;
+  indexed.sort((a, b) => {
+    const ga = group(a), gb = group(b);
+    if(ga !== gb) return ga - gb;                        // group first
+    return (b.item.amount||0) - (a.item.amount||0);     // then balance DESC
+  });
+  return indexed;
+}
+
 function renderManualBadges(){
   const container=$('manualNetsContainer');
   if(!container) return;
   if(!manualBalances.length){container.innerHTML='';return;}
-  container.innerHTML=manualBalances.map((item,index)=>{
+
+  container.innerHTML=sortedManualEntries().map(({ item, origIdx })=>{
     const isUserscript = item._gist && item.source !== 'portfolio-app';
     const isAppPushed  = item._gist && item.source === 'portfolio-app';
-    const isLocal      = !item._gist;
 
     let dotColor, valColor, borderColor, badgeHtml='', editAttr='';
 
@@ -1000,17 +1014,17 @@ function renderManualBadges(){
     } else if(isAppPushed){
       dotColor='var(--eth-c)';valColor='var(--eth-c)';borderColor='rgba(155,142,255,0.3)';
       badgeHtml=`<span class="gist-sync-badge">☁ synced</span>`;
-      editAttr=`onclick="editManualAmount(${index}, this)"`;
+      editAttr=`onclick="editManualAmount(${origIdx}, this)"`;
     } else {
       dotColor='var(--gold)';valColor='var(--gold)';borderColor='var(--border)';
-      editAttr=`onclick="editManualAmount(${index}, this)"`;
+      editAttr=`onclick="editManualAmount(${origIdx}, this)"`;
     }
 
     const timeHtml = item.updatedAt
       ? `<span style="font-size:9px;opacity:0.55;margin-left:3px">${relativeTime(item.updatedAt)}</span>`
       : '';
 
-    return `<div class="hero-net manual-edit-card" data-index="${index}"
+    return `<div class="hero-net manual-edit-card" data-index="${origIdx}"
          style="border-color:${borderColor};position:relative;">
       <div class="hero-net-dot" style="background:${dotColor}"></div>
       <div class="hero-net-name" style="color:var(--text2)">
@@ -1267,10 +1281,10 @@ function openSettings(){
   addresses.forEach(a=>settingsAddRow(a));
 
   const manualList=$('manualList');manualList.innerHTML='';
-  // Show all manual entries in settings; _gist=app-pushed are editable, userscript ones are readonly
-  manualBalances.forEach(m=>{
+  // Show all manual entries in settings using same sort order as hero badges:
+  // local/app-synced (balance DESC) first, then userscript readonly rows (balance DESC)
+  sortedManualEntries().forEach(({ item: m })=>{
     if(m._gist && m.source!=='portfolio-app'){
-      // Userscript entry → show as read-only info row
       settingsAddManualRowReadonly(m.name, m.amount, m.updatedAt);
     } else {
       settingsAddManualRow(m.name, m.amount, m._gist);
