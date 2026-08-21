@@ -788,11 +788,22 @@ async function pushManualToGist(userManualEntries){
 
 // ── GIST MERGE INTO MANUAL ────────────────────────────────────────
 // _gist=true entries = pulled from Gist (both userscript & pushed-manual)
-// We keep user-managed entries (_gist=false) untouched.
+// After merge, any local (_gist=false) entry whose slug matches a gist key is removed
+// to prevent duplicates when the same entry exists both locally and in Gist.
 function mergeGistIntoManual(gistData){
   if(!gistData) return;
-  // Remove old gist-sourced entries
-  manualBalances = manualBalances.filter(m => !m._gist);
+  // Build set of slugs that exist in Gist (for dedup of local entries)
+  const gistSlugs = new Set(Object.keys(gistData).map(k=>k.toLowerCase()));
+
+  // Remove old gist-sourced entries, AND local entries whose name-slug now lives in Gist
+  manualBalances = manualBalances.filter(m => {
+    if(m._gist) return false; // always replace gist entries
+    // Remove local entry if its slug is now covered by Gist
+    const slug = toSlug(m.name);
+    const manualSlug = 'manual-' + slug;
+    return !gistSlugs.has(slug) && !gistSlugs.has(manualSlug);
+  });
+
   Object.entries(gistData).forEach(([key, val])=>{
     if(!val || typeof val.balance === 'undefined') return;
     // Derive display label: prefer val.label, else humanise key
@@ -911,6 +922,29 @@ function obSave(){
   initApp();
 }
 
+// ── DEDUP CLEANUP ─────────────────────────────────────────────────
+// Remove any duplicate entries from manualBalances array in-place.
+// Priority: _gist:true entries win over local ones with same slug.
+function dedupManualBalances(){
+  const seen = new Map(); // slug → index of kept entry
+  const toKeep = [];
+  // First pass: index all entries, gist entries override local
+  for(const entry of manualBalances){
+    const slug = toSlug(entry.name);
+    if(!slug) continue;
+    if(!seen.has(slug)){
+      seen.set(slug, entry);
+    } else {
+      // Gist entry wins over local
+      if(entry._gist && !seen.get(slug)._gist){
+        seen.set(slug, entry);
+      }
+      // Otherwise keep existing (first seen or gist)
+    }
+  }
+  manualBalances = [...seen.values()];
+}
+
 // MAIN APP
 async function initApp(){
   addresses=loadAddresses();
@@ -929,6 +963,10 @@ async function initApp(){
   if(gistId){
     const gistData=await fetchGistBalances(gistId);
     mergeGistIntoManual(gistData);
+  } else {
+    // Even without Gist, clean up any stale duplicates from localStorage
+    dedupManualBalances();
+    saveManualBalances(manualBalances);
   }
 
   renderManualBadges();
@@ -1350,10 +1388,11 @@ async function saveSettings(){
     showToast('💾 Saving & syncing to Gist…',3000);
     const ok=await pushManualToGist(userManual);
     if(ok){
-      showToast('✓ Saved & Gist sync হয়েছে');
-      // Pull back to tag with _gist:true & updatedAt
+      // Pull back from Gist — mergeGistIntoManual will dedup and replace
+      // local entries with gist-tagged ones (no duplicates)
       const gistData=await fetchGistBalances(gistId);
       mergeGistIntoManual(gistData);
+      showToast('✓ Saved & Gist sync হয়েছে');
     } else {
       showToast('✓ Local saved — Gist sync ব্যর্থ');
     }
