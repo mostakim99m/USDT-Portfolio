@@ -1010,10 +1010,14 @@ function renderManualBadges(){
 
     if(isUserscript){
       dotColor='var(--green)';valColor='var(--green)';borderColor='rgba(61,214,140,0.3)';
-      badgeHtml=`<span class="gist-sync-badge">🔗 script</span>`;
+      const scriptTime = item.updatedAt ? relativeTime(item.updatedAt) : '';
+      const scriptTip  = `Userscript sync${scriptTime?' · '+scriptTime:''}`;
+      badgeHtml=`<span class="gist-sync-badge" title="${scriptTip}">🔗</span>`;
     } else if(isAppPushed){
       dotColor='var(--eth-c)';valColor='var(--eth-c)';borderColor='rgba(155,142,255,0.3)';
-      badgeHtml=`<span class="gist-sync-badge">☁ synced</span>`;
+      const syncTime = item.updatedAt ? relativeTime(item.updatedAt) : '';
+      const syncTip  = `Gist synced${syncTime?' · '+syncTime:''}`;
+      badgeHtml=`<span class="gist-sync-badge" title="${syncTip}">☁</span>`;
       editAttr=`onclick="editManualAmount(${origIdx}, this)"`;
     } else {
       dotColor='var(--gold)';valColor='var(--gold)';borderColor='var(--border)';
@@ -1164,12 +1168,27 @@ async function fetchAll(){
   $('heroTotal').classList.remove('loading');
   fmtHero(grand);
 
+  // Update values first
   ['eth','bsc','pol'].forEach(k=>{
     const el=document.querySelector(`.hero-net.${k}`);
     if(el)el.style.display=activeNets.includes(k)?'flex':'none';
     const valEl=$('hero'+k.charAt(0).toUpperCase()+k.slice(1));
     if(valEl)valEl.textContent=activeNets.includes(k)?fmt(totals[k]||0):'—';
   });
+
+  // Sort chain badges: balance DESC, zero last
+  const heroNetsRow=document.querySelector('.hero-nets');
+  if(heroNetsRow){
+    const badges=[...heroNetsRow.children];
+    badges.sort((a,b)=>{
+      const va=parseFloat(a.querySelector('.hero-net-val')?.textContent?.replace(/,/g,''))||0;
+      const vb=parseFloat(b.querySelector('.hero-net-val')?.textContent?.replace(/,/g,''))||0;
+      if(va===0&&vb!==0)return 1;
+      if(vb===0&&va!==0)return -1;
+      return vb-va;
+    });
+    badges.forEach(b=>heroNetsRow.appendChild(b));
+  }
 
   const now=new Date();
   $('lastUpdate').textContent='Updated '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
@@ -1339,12 +1358,14 @@ function settingsAddManualRow(name='', amt='', isSynced=false){
 function settingsAddManualRowReadonly(name, amt, updatedAt){
   const list=$('manualList');
   const row=document.createElement('div');row.className='manual-row';
-  const timeStr = updatedAt ? ` · ${relativeTime(updatedAt)}` : '';
+  const timeStr  = updatedAt ? relativeTime(updatedAt) : '';
+  const tipLabel = `Userscript sync${timeStr?' · '+timeStr:''}`;
+  const timeDisp = timeStr ? `<span style="font-size:9px;opacity:0.5;margin-left:4px">${timeStr}</span>` : '';
   row.innerHTML=`
     <div style="flex:1;display:flex;align-items:center;gap:8px;
          background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
-      <span style="font-size:11px;font-family:var(--mono);color:var(--text2);flex:1">${name}</span>
-      <span class="gist-sync-badge">🔗 script${timeStr}</span>
+      <span style="font-size:11px;font-family:var(--mono);color:var(--text2);flex:1">${name}${timeDisp}</span>
+      <span class="gist-sync-badge" title="${tipLabel}">🔗</span>
     </div>
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;
          padding:8px 12px;font-family:var(--mono);font-size:12px;color:var(--green);width:110px;text-align:right">
